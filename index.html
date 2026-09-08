@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#2563eb" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<title data-i18n="app.title">حصر الأجهزة</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%232563eb'/%3E%3Crect x='18' y='24' width='64' height='40' rx='4' fill='white'/%3E%3Crect x='30' y='70' width='40' height='8' rx='3' fill='white'/%3E%3C/svg%3E" />
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%232563eb'/%3E%3Crect x='18' y='24' width='64' height='40' rx='4' fill='white'/%3E%3Crect x='30' y='70' width='40' height='8' rx='3' fill='white'/%3E%3C/svg%3E" />
+<link rel="manifest" href="data:application/manifest+json;base64,PLACEHOLDER_MANIFEST" id="manifest-link" />
+<style>
+:root{
+  --primary:#2563eb; --primary-hover:#1d4ed8; --secondary:#64748b;
+  --bg:#f1f5f9; --surface:#ffffff; --border:#e2e8f0; --text:#1e293b; --text-muted:#64748b;
+  --danger:#ef4444; --success:#22c55e; --warning:#f59e0b; --radius:10px; --shadow:0 1px 3px rgba(0,0,0,.08);
+  --nav-h:60px; --header-h:52px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Segoe UI','Tahoma',system-ui,sans-serif;
+  background:var(--bg); color:var(--text);
+  padding-top:var(--header-h); padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  min-height:100vh;
+}
+html[dir="rtl"] body{font-family:'Tahoma','Segoe UI',system-ui,sans-serif}
+.hidden{display:none !important}
+button{font-family:inherit}
+input,select,textarea{font-family:inherit}
+
+/* Header */
+#app-header{
+  position:fixed; top:0; inset-inline:0; height:var(--header-h); z-index:50;
+  background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:space-between;
+  padding:0 .9rem; box-shadow:var(--shadow);
+}
+#app-title{font-weight:700; font-size:1.05rem}
+#btn-lang-toggle{
+  background:rgba(255,255,255,.18); color:#fff; border:none; border-radius:8px;
+  padding:.4rem .7rem; font-size:.8rem; cursor:pointer; font-weight:600;
+}
+
+/* Bottom nav */
+#bottom-nav{
+  position:fixed; bottom:0; inset-inline:0; height:var(--nav-h); z-index:50;
+  background:var(--surface); border-top:1px solid var(--border);
+  display:flex; padding-bottom:env(safe-area-inset-bottom);
+  box-shadow:0 -1px 6px rgba(0,0,0,.06);
+}
+.nav-item{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:.15rem; background:none; border:none; color:var(--text-muted); font-size:.68rem; cursor:pointer;
+  padding:.3rem 0;
+}
+.nav-item .nav-icon{font-size:1.15rem}
+.nav-item.active{color:var(--primary); font-weight:700}
+
+/* Main content */
+#app-content{padding:.75rem; max-width:920px; margin:0 auto}
+.view{animation:fadein .15s ease}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+
+/* Section header row */
+.section-head{display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.75rem; flex-wrap:wrap}
+.section-head h2{font-size:1.05rem}
+.section-title-row{display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem}
+
+/* Cards */
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:.85rem; box-shadow:var(--shadow); margin-bottom:.6rem}
+.card-actions{display:flex; gap:.4rem; margin-top:.6rem}
+.simple-card{display:flex; align-items:center; justify-content:space-between; gap:.5rem; flex-wrap:wrap}
+.simple-card .card-actions{margin-top:0}
+.simple-card-name{font-weight:600; flex:1}
+
+.record-card{display:flex; align-items:flex-start; justify-content:space-between; gap:.6rem; flex-wrap:wrap}
+.record-card-main{flex:1; min-width:0}
+.record-title{font-weight:700}
+.record-sub{color:var(--text-muted); font-size:.82rem; margin-top:.15rem}
+.record-tags{display:flex; flex-wrap:wrap; gap:.3rem; margin-top:.4rem}
+.tag{background:var(--bg); color:var(--text-muted); border:1px solid var(--border); border-radius:20px; padding:.1rem .55rem; font-size:.72rem}
+.tag-status-assigned{background:#dcfce7; color:#166534; border-color:#bbf7d0}
+.tag-status-unassigned{background:#fef3c7; color:#92400e; border-color:#fde68a}
+
+/* Buttons */
+.btn{padding:.55rem 1rem; border:none; border-radius:var(--radius); cursor:pointer; font-size:.85rem; font-weight:600; transition:background .15s}
+.btn-primary{background:var(--primary); color:#fff}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-secondary{background:var(--border); color:var(--text)}
+.btn-danger{background:var(--danger); color:#fff}
+.btn-sm{padding:.35rem .65rem; font-size:.75rem}
+.btn-block{width:100%}
+.btn-icon{background:none; border:none; cursor:pointer; color:inherit; font-size:1rem}
+.fab{
+  position:fixed; bottom:calc(var(--nav-h) + 14px + env(safe-area-inset-bottom)); inset-inline-end:16px;
+  width:52px; height:52px; border-radius:50%; background:var(--primary); color:#fff; border:none;
+  font-size:1.6rem; box-shadow:0 4px 12px rgba(37,99,235,.4); cursor:pointer; z-index:40;
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* Forms */
+.form-group{display:flex; flex-direction:column; gap:.3rem; margin-bottom:.85rem}
+.form-group label{font-size:.78rem; font-weight:700; color:var(--text-muted)}
+.form-row{display:flex; gap:.6rem; flex-wrap:wrap}
+.form-row .form-group{flex:1; min-width:140px}
+.form-group input[type="text"],.form-group input[type="search"],.form-group select,.form-group textarea{
+  padding:.6rem .7rem; border:1px solid var(--border); border-radius:var(--radius);
+  font-size:.9rem; background:var(--surface); color:var(--text); width:100%;
+}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none; border-color:var(--primary)}
+.form-group textarea{resize:vertical; min-height:60px}
+
+/* Segmented toggle */
+.segmented{display:flex; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:.85rem}
+.segmented button{flex:1; padding:.55rem; border:none; background:var(--surface); color:var(--text-muted); font-weight:700; font-size:.82rem; cursor:pointer}
+.segmented button.active{background:var(--primary); color:#fff}
+
+/* Searchable combobox */
+.combo{position:relative}
+.combo-list{
+  position:absolute; top:calc(100% + 4px); inset-inline:0; background:var(--surface);
+  border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 6px 18px rgba(0,0,0,.12);
+  max-height:220px; overflow-y:auto; z-index:60;
+}
+.combo-option{padding:.55rem .7rem; cursor:pointer; font-size:.88rem; border-bottom:1px solid var(--border)}
+.combo-option:last-child{border-bottom:none}
+.combo-option:hover,.combo-option.highlight{background:var(--bg)}
+.combo-empty{padding:.6rem .7rem; color:var(--text-muted); font-size:.82rem}
+
+/* Service chips */
+.service-chips{display:flex; flex-wrap:wrap; gap:.4rem}
+.service-chip{
+  display:flex; align-items:center; gap:.3rem; border:1px solid var(--border); border-radius:20px;
+  padding:.3rem .65rem; font-size:.78rem; cursor:pointer; background:var(--surface);
+}
+.service-chip:has(input:checked){background:var(--primary); color:#fff; border-color:var(--primary)}
+.service-chip-input{accent-color:var(--primary)}
+
+/* Search bar */
+.search-bar{position:relative; margin-bottom:.7rem}
+.search-bar input{padding-inline-start:2.1rem}
+.search-bar::before{content:"🔍"; position:absolute; top:50%; inset-inline-start:.7rem; transform:translateY(-50%); font-size:.85rem; opacity:.6}
+
+/* Filters row */
+.filters-row{display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:.7rem}
+.filters-row select{flex:1; min-width:110px; padding:.5rem .6rem; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); font-size:.82rem}
+
+/* Tabs (lists sub-nav) */
+.tabs{display:flex; gap:.4rem; overflow-x:auto; margin-bottom:.75rem; padding-bottom:.2rem}
+.tabs button{
+  flex-shrink:0; padding:.45rem .85rem; border-radius:20px; border:1px solid var(--border);
+  background:var(--surface); color:var(--text-muted); font-size:.82rem; font-weight:600; cursor:pointer;
+}
+.tabs button.active{background:var(--primary); color:#fff; border-color:var(--primary)}
+
+/* Import panel */
+.import-actions{display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:.7rem}
+.import-preview-table{width:100%; border-collapse:collapse; font-size:.78rem; margin:.5rem 0}
+.import-preview-table th,.import-preview-table td{border:1px solid var(--border); padding:.3rem .45rem; text-align:start}
+.import-preview-wrap{overflow-x:auto; max-height:260px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius)}
+
+/* Toast */
+#toast-container{position:fixed; top:calc(var(--header-h) + 10px); inset-inline-end:12px; z-index:9999; display:flex; flex-direction:column; gap:.5rem; max-width:88vw}
+.toast{padding:.65rem 1rem; border-radius:var(--radius); color:#fff; opacity:0; transform:translateY(-8px); transition:opacity .2s,transform .2s; font-size:.82rem; box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.toast-visible{opacity:1; transform:translateY(0)}
+.toast-success{background:var(--success)}
+.toast-error{background:var(--danger)}
+.toast-info{background:var(--primary)}
+
+/* Modal */
+#modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,.5); display:flex; align-items:flex-end; justify-content:center; z-index:1000}
+.modal{background:var(--surface); border-radius:16px 16px 0 0; padding:1.1rem; width:100%; max-width:520px; max-height:88vh; overflow-y:auto; box-shadow:0 -8px 32px rgba(0,0,0,.2)}
+@media(min-width:640px){#modal-overlay{align-items:center} .modal{border-radius:16px}}
+.modal-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:.9rem}
+.modal-header h3{font-size:1rem}
+.modal-body{color:var(--text)}
+.modal-footer{display:flex; gap:.5rem; justify-content:flex-end; margin-top:1rem}
+
+/* Empty state */
+.empty-state{text-align:center; padding:2.5rem 1rem; color:var(--text-muted); font-size:.9rem}
+
+/* Dashboard charts */
+.chart-card h3{font-size:.9rem; margin-bottom:.6rem}
+.chart-flex{display:flex; align-items:center; gap:1rem; flex-wrap:wrap}
+.chart-legend{flex:1; min-width:160px; display:flex; flex-direction:column; gap:.4rem}
+.legend-row{display:flex; align-items:center; gap:.4rem; font-size:.8rem}
+.legend-dot{width:10px; height:10px; border-radius:50%; flex-shrink:0}
+.legend-label{flex:1}
+.legend-value{font-weight:700; color:var(--text-muted)}
+.bar-chart{display:flex; flex-direction:column; gap:.5rem}
+.bar-row{display:flex; align-items:center; gap:.5rem; font-size:.78rem}
+.bar-row .bar-label{width:38%; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.bar-track{flex:1; background:var(--bg); border-radius:6px; height:14px; overflow:hidden}
+.bar-fill{height:100%; background:var(--primary); border-radius:6px}
+.bar-value{width:34px; text-align:end; flex-shrink:0; font-weight:700; color:var(--text-muted)}
+
+/* RTL specific mirrors (logical properties above already cover most; explicit overrides below) */
+html[dir="rtl"] .fab{inset-inline-end:16px}
+html[dir="ltr"] .segmented{direction:ltr}
+
+/* Responsive */
+@media(max-width:420px){
+  .nav-item{font-size:.62rem}
+  #app-title{font-size:.95rem}
+}
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+<div id="modal-overlay" class="hidden"></div>
+
+<header id="app-header">
+  <div id="app-title" data-i18n="app.title"></div>
+  <button id="btn-lang-toggle" class="btn-icon" type="button" aria-label="language"></button>
+</header>
+
+<main id="app-content">
+
+  <section id="assign" class="view hidden">
+    <div class="module-body"></div>
+  </section>
+
+  <section id="lists" class="view hidden">
+    <div class="tabs" id="lists-tabs"></div>
+    <div class="module-body"></div>
+  </section>
+
+  <section id="dashboard" class="view hidden">
+    <div class="module-body"></div>
+  </section>
+
+  <section id="settings" class="view hidden">
+    <div class="module-body"></div>
+  </section>
+
+</main>
+
+<nav id="bottom-nav">
+  <button class="nav-item" data-nav="assign" type="button">
+    <span class="nav-icon">🖥️</span><span data-i18n="nav.assign"></span>
+  </button>
+  <button class="nav-item" data-nav="lists" type="button">
+    <span class="nav-icon">📋</span><span data-i18n="nav.lists"></span>
+  </button>
+  <button class="nav-item" data-nav="dashboard" type="button">
+    <span class="nav-icon">📊</span><span data-i18n="nav.dashboard"></span>
+  </button>
+  <button class="nav-item" data-nav="settings" type="button">
+    <span class="nav-icon">⚙️</span><span data-i18n="nav.settings"></span>
+  </button>
+</nav>
+
+<!-- ==================== Templates ==================== -->
+
+<template id="tpl-record-card">
+  <div class="card record-card" data-id="">
+    <div class="record-card-main">
+      <div class="record-title"></div>
+      <div class="record-sub"></div>
+      <div class="record-tags"></div>
+    </div>
+    <div class="card-actions">
+      <button class="btn btn-sm btn-edit" type="button" data-i18n="common.edit"></button>
+      <button class="btn btn-sm btn-danger btn-delete" type="button" data-i18n="common.delete"></button>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-simple-card">
+  <div class="card simple-card" data-id="">
+    <div class="simple-card-name"></div>
+    <div class="card-actions">
+      <button class="btn btn-sm btn-edit" type="button" data-i18n="common.edit"></button>
+      <button class="btn btn-sm btn-danger btn-delete" type="button" data-i18n="common.delete"></button>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-combo-option">
+  <div class="combo-option" data-id=""></div>
+</template>
+
+<template id="tpl-service-chip">
+  <label class="service-chip">
+    <input type="checkbox" class="service-chip-input" />
+    <span class="service-chip-label"></span>
+  </label>
+</template>
+
+<script>
+'use strict';
+
+/* ============================== Store ============================== */
+const Store = (() => {
+  const KEY = 'assets_inventory_state_v1';
+  const defaults = {
+    version: 1,
+    language: 'ar',
+    departments: [],
+    employees: [],
+    deviceTypes: [],
+    services: [],
+    assignments: []
+  };
+  const listeners = {};
+
+  function on(key, cb){ (listeners[key] ||= []).push(cb); }
+  function emit(key, val){ (listeners[key]||[]).forEach(fn=>fn(val)); (listeners['*']||[]).forEach(fn=>fn(key,val)); }
+
+  function _load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      return raw ? { ...defaults, ...JSON.parse(raw) } : { ...defaults };
+    }catch{ return { ...defaults }; }
+  }
+  let state = _load();
+
+  function get(key){ return key ? state[key] : state; }
+  function set(key, value){
+    state = { ...state, [key]: value };
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){ console.error('Store.set failed', e); }
+    emit(key, value);
+  }
+  function replaceAll(snapshot){
+    state = { ...defaults, ...snapshot };
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){ console.error('Store.replaceAll failed', e); }
+    emit('*replaced*', state);
+  }
+  function nextId(collection){
+    const list = state[collection] || [];
+    const max = list.reduce((m,i)=> Math.max(m, i.id||0), 0);
+    return max + 1;
+  }
+  function upsert(collection, record){
+    const list = [...(state[collection]||[])];
+    if (record.id){
+      const idx = list.findIndex(r=>r.id===record.id);
+      if (idx>=0){ list[idx] = { ...list[idx], ...record, updatedAt: Date.now() }; }
+      else { list.push({ ...record, updatedAt: Date.now() }); }
+    } else {
+      record.id = nextId(collection);
+      record.createdAt = Date.now();
+      list.push(record);
+    }
+    set(collection, list);
+    return record;
+  }
+  function remove(collection, id){
+    set(collection, (state[collection]||[]).filter(r=>r.id!==id));
+  }
+
+  return { get, set, on, upsert, remove, nextId, replaceAll };
+})();
+
+/* ============================== i18n ============================== */
+const i18n = (() => {
+  const dict = {
+    en: {
+      'app.title':'Device Inventory',
+      'nav.assign':'Assign','nav.lists':'Lists','nav.dashboard':'Stats','nav.settings':'Settings',
+      'common.save':'Save','common.cancel':'Cancel','common.delete':'Delete','common.edit':'Edit',
+      'common.add':'Add','common.search':'Search...','common.noData':'No records yet.',
+      'common.close':'Close','common.confirm':'Confirm','common.all':'All',
+      'common.export':'Export CSV','common.import':'Import CSV/XLSX','common.yes':'Yes','common.no':'No',
+      'toast.saved':'Saved successfully','toast.deleted':'Deleted successfully',
+      'toast.error':'Something went wrong','toast.imported':'Imported {n} record(s)',
+      'toast.exported':'Exported successfully','toast.invalidFile':'Could not read this file',
+      'toast.required':'Please fill the required fields',
+      'confirm.delete':'This action cannot be undone.',
+      'assign.title':'Assign Devices','assign.addBtn':'Add Device',
+      'assign.editTitle':'Edit Device Record','assign.addTitle':'Add Device Record',
+      'assign.statusAssigned':'Assigned to employee','assign.statusUnassigned':'Unassigned (in storage)',
+      'assign.employeeLabel':'Employee','assign.employeeSearchPlaceholder':'Search employee...',
+      'assign.departmentLabel':'Department / Location','assign.locationNote':'Location note (optional)',
+      'assign.deviceTypeLabel':'Device Type','assign.deviceTypeSearchPlaceholder':'Search device type...',
+      'assign.model':'Model','assign.serialNumber':'Serial number','assign.assetTag':'Asset tag',
+      'assign.ipAddress':'IP address','assign.notes':'Notes','assign.servicesLabel':'Services',
+      'assign.filterDept':'All departments','assign.filterType':'All device types','assign.filterStatus':'All statuses',
+      'assign.searchPlaceholder':'Search by employee, device, serial...',
+      'assign.noRecords':'No devices recorded yet. Tap + to add one.',
+      'assign.deleteConfirm':'Delete this device record?',
+      'assign.selectEmployeeFirst':'Please choose an employee',
+      'assign.selectDeptFirst':'Please choose a department',
+      'assign.selectDeviceTypeFirst':'Please choose a device type',
+      'lists.departments':'Departments','lists.employees':'Employees','lists.deviceTypes':'Device Types','lists.services':'Services',
+      'lists.addDepartment':'Add Department','lists.addEmployee':'Add Employee',
+      'lists.addDeviceType':'Add Device Type','lists.addService':'Add Service',
+      'lists.nameLabel':'Name','lists.employeeCode':'Employee code (optional)','lists.jobTitle':'Job title (optional)',
+      'lists.departmentLabel':'Department',
+      'lists.exportCsv':'Export CSV','lists.importPreviewTitle':'Import Preview',
+      'lists.importConfirm':'Confirm Import','lists.importRowsFound':'{n} row(s) found',
+      'lists.noItems':'No items yet.','lists.deleteConfirmName':'Delete "{name}"?',
+      'lists.chooseFile':'Choose File (CSV / XLSX)','lists.noDepartment':'— No department —',
+      'lists.usedByDevices':'Cannot delete: used by {n} device record(s).',
+      'dashboard.title':'Statistics','dashboard.byType':'Devices by Type','dashboard.byDepartment':'Devices by Department',
+      'dashboard.assignedVsUnassigned':'Assigned vs Unassigned','dashboard.noData':'Add some device records to see charts.',
+      'dashboard.assigned':'Assigned','dashboard.unassigned':'Unassigned',
+      'settings.title':'Settings','settings.language':'Language','settings.backup':'Backup & Restore',
+      'settings.export':'Export Backup (JSON)','settings.import':'Restore Backup (JSON)',
+      'settings.dangerZone':'Danger Zone','settings.clearAll':'Erase All Data',
+      'settings.clearAllConfirm':'Erase ALL data?','settings.clearAllWarn':'This deletes every department, employee, device type, service and assignment record permanently.',
+      'settings.about':'This app stores all data locally on this device only. Use backup/restore to move data between devices.',
+    },
+    ar: {
+      'app.title':'حصر الأجهزة',
+      'nav.assign':'تعيين الأجهزة','nav.lists':'القوائم','nav.dashboard':'الإحصائيات','nav.settings':'الإعدادات',
+      'common.save':'حفظ','common.cancel':'إلغاء','common.delete':'حذف','common.edit':'تعديل',
+      'common.add':'إضافة','common.search':'بحث...','common.noData':'لا توجد بيانات بعد.',
+      'common.close':'إغلاق','common.confirm':'تأكيد','common.all':'الكل',
+      'common.export':'تصدير CSV','common.import':'استيراد CSV/XLSX','common.yes':'نعم','common.no':'لا',
+      'toast.saved':'تم الحفظ بنجاح','toast.deleted':'تم الحذف بنجاح',
+      'toast.error':'حدث خطأ ما','toast.imported':'تم استيراد {n} سجل',
+      'toast.exported':'تم التصدير بنجاح','toast.invalidFile':'تعذّرت قراءة هذا الملف',
+      'toast.required':'يرجى ملء الحقول المطلوبة',
+      'confirm.delete':'لا يمكن التراجع عن هذا الإجراء.',
+      'assign.title':'تعيين الأجهزة','assign.addBtn':'إضافة جهاز',
+      'assign.editTitle':'تعديل سجل الجهاز','assign.addTitle':'إضافة سجل جهاز',
+      'assign.statusAssigned':'مخصص لموظف','assign.statusUnassigned':'غير مخصص (في المخزن)',
+      'assign.employeeLabel':'الموظف','assign.employeeSearchPlaceholder':'ابحث عن موظف...',
+      'assign.departmentLabel':'الإدارة / الموقع','assign.locationNote':'ملاحظة الموقع (اختياري)',
+      'assign.deviceTypeLabel':'نوع الجهاز','assign.deviceTypeSearchPlaceholder':'ابحث عن نوع الجهاز...',
+      'assign.model':'الموديل','assign.serialNumber':'الرقم التسلسلي','assign.assetTag':'رقم الأصل',
+      'assign.ipAddress':'عنوان IP','assign.notes':'ملاحظات','assign.servicesLabel':'الخدمات',
+      'assign.filterDept':'كل الإدارات','assign.filterType':'كل أنواع الأجهزة','assign.filterStatus':'كل الحالات',
+      'assign.searchPlaceholder':'ابحث بالموظف أو الجهاز أو الرقم التسلسلي...',
+      'assign.noRecords':'لا توجد أجهزة مسجلة بعد. اضغط + للإضافة.',
+      'assign.deleteConfirm':'هل تريد حذف سجل هذا الجهاز؟',
+      'assign.selectEmployeeFirst':'يرجى اختيار الموظف',
+      'assign.selectDeptFirst':'يرجى اختيار الإدارة',
+      'assign.selectDeviceTypeFirst':'يرجى اختيار نوع الجهاز',
+      'lists.departments':'الإدارات','lists.employees':'الموظفون','lists.deviceTypes':'أنواع الأجهزة','lists.services':'الخدمات',
+      'lists.addDepartment':'إضافة إدارة','lists.addEmployee':'إضافة موظف',
+      'lists.addDeviceType':'إضافة نوع جهاز','lists.addService':'إضافة خدمة',
+      'lists.nameLabel':'الاسم','lists.employeeCode':'الرقم الوظيفي (اختياري)','lists.jobTitle':'المسمى الوظيفي (اختياري)',
+      'lists.departmentLabel':'الإدارة',
+      'lists.exportCsv':'تصدير CSV','lists.importPreviewTitle':'معاينة الاستيراد',
+      'lists.importConfirm':'تأكيد الاستيراد','lists.importRowsFound':'تم العثور على {n} صف',
+      'lists.noItems':'لا توجد عناصر بعد.','lists.deleteConfirmName':'هل تريد حذف "{name}"؟',
+      'lists.chooseFile':'اختر ملف (CSV / XLSX)','lists.noDepartment':'— بدون إدارة —',
+      'lists.usedByDevices':'لا يمكن الحذف: مستخدم في {n} سجل جهاز.',
+      'dashboard.title':'الإحصائيات','dashboard.byType':'توزيع الأجهزة حسب النوع','dashboard.byDepartment':'توزيع الأجهزة حسب الإدارة',
+      'dashboard.assignedVsUnassigned':'المخصصة مقابل غير المخصصة','dashboard.noData':'أضف بعض سجلات الأجهزة لعرض الرسوم البيانية.',
+      'dashboard.assigned':'مخصصة','dashboard.unassigned':'غير مخصصة',
+      'settings.title':'الإعدادات','settings.language':'اللغة','settings.backup':'النسخ الاحتياطي والاستعادة',
+      'settings.export':'تصدير نسخة احتياطية (JSON)','settings.import':'استعادة نسخة احتياطية (JSON)',
+      'settings.dangerZone':'منطقة الخطر','settings.clearAll':'مسح جميع البيانات',
+      'settings.clearAllConfirm':'هل تريد مسح كل البيانات؟','settings.clearAllWarn':'سيتم حذف جميع الإدارات والموظفين وأنواع الأجهزة والخدمات وسجلات الأجهزة نهائيًا.',
+      'settings.about':'يخزّن هذا التطبيق كل البيانات محليًا على هذا الجهاز فقط. استخدم النسخ الاحتياطي للنقل بين الأجهزة.',
+    }
+  };
+  let lang = 'ar';
+  function t(key, repl){
+    let s = dict[lang]?.[key] ?? dict.en[key] ?? key;
+    if (repl) for (const k in repl) s = s.replace(new RegExp('\\{'+k+'\\}','g'), repl[k]);
+    return s;
+  }
+  function applyToDOM(){
+    document.querySelectorAll('[data-i18n]').forEach(el=>{
+      const key = el.getAttribute('data-i18n');
+      if (el.tagName==='INPUT' || el.tagName==='TEXTAREA') el.placeholder = t(key);
+      else el.textContent = t(key);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+      el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+    });
+  }
+  function setLanguage(l){
+    lang = l;
+    document.documentElement.lang = l;
+    document.documentElement.dir = l==='ar' ? 'rtl' : 'ltr';
+    applyToDOM();
+  }
+  function current(){ return lang; }
+  function init(){
+    Store.on('language', l=>{ setLanguage(l); if (typeof App !== 'undefined') App.rerender(); });
+    setLanguage(Store.get('language') || 'ar');
+  }
+  return { t, setLanguage, applyToDOM, init, current };
+})();
+
+/* ============================== UI ============================== */
+const UI = (() => {
+  function sanitize(str){
+    const d = document.createElement('div');
+    d.textContent = String(str ?? '');
+    return d.innerHTML;
+  }
+
+  function renderTemplate(id, bindings={}){
+    const tpl = document.getElementById('tpl-'+id);
+    if (!tpl) return null;
+    const clone = tpl.content.cloneNode(true).firstElementChild;
+    for (const [sel, b] of Object.entries(bindings)){
+      const el = sel==='self' ? clone : clone.querySelector(sel);
+      if (!el) continue;
+      if (b.text !== undefined) el.textContent = b.text;
+      if (b.attr !== undefined) el.setAttribute(b.attr, b.value);
+      if (b.html !== undefined) el.innerHTML = sanitize(b.html);
+    }
+    return clone;
+  }
+
+  function showToast(message, type='info', duration=3200){
+    const c = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = 'toast toast-'+type;
+    el.textContent = message;
+    c.appendChild(el);
+    requestAnimationFrame(()=> el.classList.add('toast-visible'));
+    setTimeout(()=>{ el.classList.remove('toast-visible'); setTimeout(()=>el.remove(), 300); }, duration);
+  }
+
+  function showModal({ title, bodyEl, onConfirm, confirmText, cancelText, danger=false, hideFooter=false }){
+    const overlay = document.getElementById('modal-overlay');
+    overlay.innerHTML = '';
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.setAttribute('role','dialog');
+    const header = document.createElement('div');
+    header.className = 'modal-header';
+    const h3 = document.createElement('h3'); h3.textContent = title || '';
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'btn-icon'; closeBtn.type='button'; closeBtn.textContent = '✕';
+    header.append(h3, closeBtn);
+    const body = document.createElement('div');
+    body.className = 'modal-body';
+    if (bodyEl) body.appendChild(bodyEl);
+    modal.append(header, body);
+    if (!hideFooter){
+      const footer = document.createElement('div');
+      footer.className = 'modal-footer';
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'btn btn-secondary'; cancelBtn.type='button';
+      cancelBtn.textContent = cancelText || i18n.t('common.cancel');
+      const confirmBtn = document.createElement('button');
+      confirmBtn.className = 'btn ' + (danger ? 'btn-danger':'btn-primary'); confirmBtn.type='button';
+      confirmBtn.textContent = confirmText || i18n.t('common.save');
+      footer.append(cancelBtn, confirmBtn);
+      modal.appendChild(footer);
+      cancelBtn.onclick = close;
+      confirmBtn.onclick = () => { const r = onConfirm?.(); if (r !== false) close(); };
+    }
+    overlay.appendChild(modal);
+    overlay.classList.remove('hidden');
+    function close(){ overlay.classList.add('hidden'); overlay.innerHTML=''; }
+    closeBtn.onclick = close;
+    overlay.onclick = (e)=>{ if (e.target===overlay) close(); };
+    return { close, modal };
+  }
+
+  function confirmDanger({ title, message, confirmText, onConfirm }){
+    const p = document.createElement('p');
+    p.textContent = message || '';
+    showModal({ title, bodyEl: p, danger:true, confirmText: confirmText || i18n.t('common.delete'), onConfirm });
+  }
+
+  function renderEmpty(container, text){
+    container.innerHTML = '';
+    const el = document.createElement('div');
+    el.className = 'empty-state';
+    el.textContent = text;
+    container.appendChild(el);
+  }
+
+  // Searchable combobox: attaches a dropdown search list to an input.
+  // options: [{id, label}], onSelect(id, label)
+  function attachCombo(inputEl, wrapEl, getOptions, onSelect){
+    let list = null;
+    function close(){ list?.remove(); list = null; }
+    function open(){
+      close();
+      const q = inputEl.value.trim().toLowerCase();
+      const opts = getOptions().filter(o => !q || o.label.toLowerCase().includes(q)).slice(0, 50);
+      list = document.createElement('div');
+      list.className = 'combo-list';
+      if (!opts.length){
+        const empty = document.createElement('div');
+        empty.className = 'combo-empty';
+        empty.textContent = i18n.t('common.noData');
+        list.appendChild(empty);
+      } else {
+        opts.forEach(o=>{
+          const row = UI.renderTemplate('combo-option', { 'self': { attr:'data-id', value:o.id }, });
+          row.textContent = o.label;
+          row.addEventListener('mousedown', (e)=>{ e.preventDefault(); inputEl.value = o.label; onSelect(o.id, o.label); close(); });
+          list.appendChild(row);
+        });
+      }
+      wrapEl.appendChild(list);
+    }
+    inputEl.addEventListener('focus', open);
+    inputEl.addEventListener('input', ()=>{ onSelect(null, inputEl.value); open(); });
+    inputEl.addEventListener('blur', ()=> setTimeout(close, 150));
+  }
+
+  function formatDate(ts){
+    if (!ts) return '';
+    const lang = i18n.current();
+    try{ return new Date(ts).toLocaleDateString(lang==='ar' ? 'ar-EG' : 'en-GB', { year:'numeric', month:'short', day:'numeric' }); }
+    catch{ return ''; }
+  }
+
+  return { sanitize, renderTemplate, showToast, showModal, confirmDanger, renderEmpty, attachCombo, formatDate };
+})();
+
+/* ============================== CSV ============================== */
+const CSV = (() => {
+  function parse(text){
+    text = text.replace(/^﻿/, '');
+    const rows = [];
+    let row = [], field = '', inQuotes = false;
+    for (let i=0; i<text.length; i++){
+      const c = text[i], next = text[i+1];
+      if (inQuotes){
+        if (c === '"' && next === '"'){ field += '"'; i++; }
+        else if (c === '"'){ inQuotes = false; }
+        else field += c;
+      } else {
+        if (c === '"') inQuotes = true;
+        else if (c === ','){ row.push(field); field=''; }
+        else if (c === '\r'){ /* skip */ }
+        else if (c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+        else field += c;
+      }
+    }
+    if (field.length || row.length){ row.push(field); rows.push(row); }
+    const nonEmpty = rows.filter(r => r.some(f => String(f).trim() !== ''));
+    if (!nonEmpty.length) return { headers: [], records: [] };
+    const headers = nonEmpty[0].map(h => String(h).trim());
+    const records = nonEmpty.slice(1).map(r => {
+      const obj = {};
+      headers.forEach((h,i)=> obj[h] = (r[i] ?? '').trim());
+      return obj;
+    });
+    return { headers, records };
+  }
+
+  function stringify(headers, rows){
+    const esc = v => {
+      const s = String(v ?? '');
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+    };
+    const lines = [headers.map(esc).join(',')];
+    rows.forEach(r => lines.push(headers.map(h => esc(r[h])).join(',')));
+    return '﻿' + lines.join('\r\n');
+  }
+
+  function download(filename, content, mime='text/csv;charset=utf-8'){
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), { href:url, download:filename });
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  return { parse, stringify, download };
+})();
+
+/* ============================== XLSX (zero-dependency reader) ============================== */
+// Reads a single-sheet .xlsx by walking the ZIP central directory, inflating each
+// entry with the browser's native DecompressionStream('deflate-raw'), and parsing
+// sharedStrings.xml + the first sheet's XML with DOMParser. No external library.
+const XLSX = (() => {
+  function supported(){ return typeof DecompressionStream !== 'undefined'; }
+
+  async function inflateRaw(bytes){
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    const buf = await new Response(stream).arrayBuffer();
+    return new Uint8Array(buf);
+  }
+
+  function readUint32LE(view, off){ return view.getUint32(off, true); }
+  function readUint16LE(view, off){ return view.getUint16(off, true); }
+
+  // Minimal ZIP reader: locates End Of Central Directory, walks central directory entries.
+  async function unzip(arrayBuffer){
+    const bytes = new Uint8Array(arrayBuffer);
+    const view = new DataView(arrayBuffer);
+    // Find EOCD signature 0x06054b50 scanning from the end
+    let eocd = -1;
+    for (let i = bytes.length - 22; i >= 0 && i >= bytes.length - 22 - 65557; i--){
+      if (readUint32LE(view, i) === 0x06054b50){ eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error('Not a valid zip/xlsx file');
+    const entryCount = readUint16LE(view, eocd + 10);
+    let cdOffset = readUint32LE(view, eocd + 16);
+
+    const files = {};
+    for (let i = 0; i < entryCount; i++){
+      const sig = readUint32LE(view, cdOffset);
+      if (sig !== 0x02014b50) break;
+      const compMethod = readUint16LE(view, cdOffset + 10);
+      const compSize = readUint32LE(view, cdOffset + 20);
+      const nameLen = readUint16LE(view, cdOffset + 28);
+      const extraLen = readUint16LE(view, cdOffset + 30);
+      const commentLen = readUint16LE(view, cdOffset + 32);
+      const localHeaderOffset = readUint32LE(view, cdOffset + 42);
+      const nameBytes = bytes.slice(cdOffset + 46, cdOffset + 46 + nameLen);
+      const name = new TextDecoder('utf-8').decode(nameBytes);
+
+      // Read local file header to find actual data offset (name/extra lengths can differ)
+      const lNameLen = readUint16LE(view, localHeaderOffset + 26);
+      const lExtraLen = readUint16LE(view, localHeaderOffset + 28);
+      const dataStart = localHeaderOffset + 30 + lNameLen + lExtraLen;
+      const dataBytes = bytes.slice(dataStart, dataStart + compSize);
+
+      files[name] = { compMethod, dataBytes };
+      cdOffset += 46 + nameLen + extraLen + commentLen;
+    }
+    return files;
+  }
+
+  async function fileText(files, name){
+    const f = files[name];
+    if (!f) return null;
+    const raw = f.compMethod === 0 ? f.dataBytes : await inflateRaw(f.dataBytes);
+    return new TextDecoder('utf-8').decode(raw);
+  }
+
+  function colToIndex(ref){
+    // "C7" -> column letters "C" -> index 2 (0-based)
+    const m = ref.match(/^([A-Z]+)/i);
+    if (!m) return 0;
+    const letters = m[1].toUpperCase();
+    let idx = 0;
+    for (let i=0; i<letters.length; i++) idx = idx*26 + (letters.charCodeAt(i) - 64);
+    return idx - 1;
+  }
+
+  function parseSheetXml(xml, sharedStrings){
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
+    const rowEls = Array.from(doc.getElementsByTagName('row'));
+    const rows = [];
+    rowEls.forEach(rowEl => {
+      const cells = Array.from(rowEl.getElementsByTagName('c'));
+      const rowArr = [];
+      cells.forEach(c => {
+        const ref = c.getAttribute('r') || '';
+        const type = c.getAttribute('t');
+        const vEl = c.getElementsByTagName('v')[0];
+        const isEl = c.getElementsByTagName('is')[0];
+        let value = '';
+        if (type === 's' && vEl){
+          const idx = parseInt(vEl.textContent, 10);
+          value = sharedStrings[idx] ?? '';
+        } else if (type === 'inlineStr' && isEl){
+          value = isEl.textContent || '';
+        } else if (vEl){
+          value = vEl.textContent || '';
+        }
+        const idx = ref ? colToIndex(ref) : rowArr.length;
+        rowArr[idx] = value;
+      });
+      for (let i=0; i<rowArr.length; i++) if (rowArr[i] === undefined) rowArr[i] = '';
+      rows.push(rowArr);
+    });
+    return rows;
+  }
+
+  function parseSharedStrings(xml){
+    if (!xml) return [];
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
+    return Array.from(doc.getElementsByTagName('si')).map(si => {
+      const tEls = Array.from(si.getElementsByTagName('t'));
+      return tEls.map(t => t.textContent || '').join('');
+    });
+  }
+
+  // Returns { headers, records } from the first worksheet, CSV-import-compatible shape.
+  async function readFirstSheet(arrayBuffer){
+    const files = await unzip(arrayBuffer);
+    const sheetName = Object.keys(files).find(n => /^xl\/worksheets\/sheet1\.xml$/i.test(n))
+      || Object.keys(files).find(n => /^xl\/worksheets\/.*\.xml$/i.test(n));
+    if (!sheetName) throw new Error('No worksheet found in file');
+    const sharedXml = await fileText(files, 'xl/sharedStrings.xml');
+    const sharedStrings = parseSharedStrings(sharedXml);
+    const sheetXml = await fileText(files, sheetName);
+    const rows = parseSheetXml(sheetXml, sharedStrings);
+    const nonEmpty = rows.filter(r => r.some(f => String(f).trim() !== ''));
+    if (!nonEmpty.length) return { headers: [], records: [] };
+    const headers = nonEmpty[0].map(h => String(h).trim());
+    const records = nonEmpty.slice(1).map(r => {
+      const obj = {};
+      headers.forEach((h,i)=> obj[h] = String(r[i] ?? '').trim());
+      return obj;
+    });
+    return { headers, records };
+  }
+
+  return { supported, readFirstSheet };
+})();
+
+/* ============================== Charts (pure SVG, no libs) ============================== */
+const Charts = (() => {
+  const PALETTE = ['#2563eb','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16','#f97316','#64748b'];
+
+  function donut(container, data){ // data: [{label, value}]
+    container.innerHTML = '';
+    const total = data.reduce((s,d)=>s+d.value, 0);
+    const wrap = document.createElement('div');
+    wrap.className = 'chart-flex';
+    const size = 150, r = 55, cx = size/2, cy = size/2, circumference = 2*Math.PI*r;
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+    svg.setAttribute('width', size); svg.setAttribute('height', size);
+    const bg = document.createElementNS(svgNS,'circle');
+    bg.setAttribute('cx',cx); bg.setAttribute('cy',cy); bg.setAttribute('r',r);
+    bg.setAttribute('fill','none'); bg.setAttribute('stroke','var(--border)'); bg.setAttribute('stroke-width','20');
+    svg.appendChild(bg);
+    let offset = 0;
+    if (total > 0){
+      data.forEach((d,i)=>{
+        if (d.value <= 0) return;
+        const frac = d.value / total;
+        const len = frac * circumference;
+        const circle = document.createElementNS(svgNS,'circle');
+        circle.setAttribute('cx',cx); circle.setAttribute('cy',cy); circle.setAttribute('r',r);
+        circle.setAttribute('fill','none');
+        circle.setAttribute('stroke', PALETTE[i % PALETTE.length]);
+        circle.setAttribute('stroke-width','20');
+        circle.setAttribute('stroke-dasharray', `${len} ${circumference-len}`);
+        circle.setAttribute('stroke-dashoffset', -offset);
+        circle.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
+        svg.appendChild(circle);
+        offset += len;
+      });
+    }
+    const centerText = document.createElementNS(svgNS,'text');
+    centerText.setAttribute('x', cx); centerText.setAttribute('y', cy+6);
+    centerText.setAttribute('text-anchor','middle');
+    centerText.setAttribute('font-size','20'); centerText.setAttribute('font-weight','700');
+    centerText.setAttribute('fill','var(--text)');
+    centerText.textContent = total;
+    svg.appendChild(centerText);
+
+    const legend = document.createElement('div');
+    legend.className = 'chart-legend';
+    data.forEach((d,i)=>{
+      if (d.value <= 0) return;
+      const row = document.createElement('div'); row.className = 'legend-row';
+      const dot = document.createElement('span'); dot.className='legend-dot'; dot.style.background = PALETTE[i % PALETTE.length];
+      const label = document.createElement('span'); label.className='legend-label'; label.textContent = d.label;
+      const val = document.createElement('span'); val.className='legend-value'; val.textContent = d.value;
+      row.append(dot,label,val);
+      legend.appendChild(row);
+    });
+    wrap.append(svg, legend);
+    container.appendChild(wrap);
+    if (total === 0) UI.renderEmpty(container, i18n.t('dashboard.noData'));
+  }
+
+  function bars(container, data){ // data: [{label, value}]
+    container.innerHTML = '';
+    const max = Math.max(1, ...data.map(d=>d.value));
+    const wrap = document.createElement('div');
+    wrap.className = 'bar-chart';
+    data.forEach((d,i)=>{
+      const row = document.createElement('div'); row.className = 'bar-row';
+      const label = document.createElement('div'); label.className='bar-label'; label.title = d.label; label.textContent = d.label;
+      const track = document.createElement('div'); track.className='bar-track';
+      const fill = document.createElement('div'); fill.className='bar-fill';
+      fill.style.width = (d.value/max*100) + '%';
+      fill.style.background = PALETTE[i % PALETTE.length];
+      track.appendChild(fill);
+      const val = document.createElement('div'); val.className='bar-value'; val.textContent = d.value;
+      row.append(label, track, val);
+      wrap.appendChild(row);
+    });
+    container.appendChild(wrap);
+    if (!data.length) UI.renderEmpty(container, i18n.t('dashboard.noData'));
+  }
+
+  return { donut, bars };
+})();
+
+/* ============================== Data helpers ============================== */
+const Data = (() => {
+  const departments = () => Store.get('departments') || [];
+  const employees = () => Store.get('employees') || [];
+  const deviceTypes = () => Store.get('deviceTypes') || [];
+  const services = () => Store.get('services') || [];
+  const assignments = () => Store.get('assignments') || [];
+
+  const byId = (list, id) => list.find(x => x.id === id);
+  const deptName = id => byId(departments(), id)?.name || '';
+  const empName = id => byId(employees(), id)?.name || '';
+  const empDeptId = id => byId(employees(), id)?.departmentId ?? null;
+  const typeName = id => byId(deviceTypes(), id)?.name || '';
+  const svcName = id => byId(services(), id)?.name || '';
+
+  // Effective department id for an assignment record (assigned -> employee's dept, else its own)
+  function assignmentDeptId(a){
+    if (a.status === 'assigned') return empDeptId(a.employeeId);
+    return a.departmentId ?? null;
+  }
+
+  function countUsage(collection, field, id){
+    return assignments().filter(a => {
+      if (collection === 'employees') return a.status==='assigned' && a.employeeId === id;
+      if (collection === 'departments') return assignmentDeptId(a) === id;
+      if (collection === 'deviceTypes') return a.deviceTypeId === id;
+      if (collection === 'services') return Array.isArray(a.serviceIds) && a.serviceIds.includes(id);
+      return false;
+    }).length;
+  }
+
+  return { departments, employees, deviceTypes, services, assignments,
+           byId, deptName, empName, empDeptId, typeName, svcName, assignmentDeptId, countUsage };
+})();
+
+/* ============================== Assign Module ============================== */
+const AssignModule = (() => {
+  let filters = { search:'', deptId:'', typeId:'', status:'' };
+
+  function render(){
+    const body = document.querySelector('#assign .module-body');
+    body.innerHTML = '';
+
+    const head = document.createElement('div');
+    head.className = 'section-head';
+    const h2 = document.createElement('h2'); h2.textContent = i18n.t('assign.title');
+    head.appendChild(h2);
+    body.appendChild(head);
+
+    const searchBar = document.createElement('div');
+    searchBar.className = 'search-bar';
+    searchBar.innerHTML = `<input type="search" id="assign-search" placeholder="${UI.sanitize(i18n.t('assign.searchPlaceholder'))}">`;
+    body.appendChild(searchBar);
+
+    const filtersRow = document.createElement('div');
+    filtersRow.className = 'filters-row';
+    filtersRow.innerHTML = `
+      <select id="assign-filter-dept"><option value="">${UI.sanitize(i18n.t('assign.filterDept'))}</option></select>
+      <select id="assign-filter-type"><option value="">${UI.sanitize(i18n.t('assign.filterType'))}</option></select>
+      <select id="assign-filter-status">
+        <option value="">${UI.sanitize(i18n.t('assign.filterStatus'))}</option>
+        <option value="assigned">${UI.sanitize(i18n.t('assign.statusAssigned'))}</option>
+        <option value="unassigned">${UI.sanitize(i18n.t('assign.statusUnassigned'))}</option>
+      </select>`;
+    body.appendChild(filtersRow);
+
+    const listEl = document.createElement('div');
+    listEl.id = 'assign-list';
+    body.appendChild(listEl);
+
+    const fab = document.createElement('button');
+    fab.className = 'fab'; fab.type = 'button'; fab.textContent = '+';
+    fab.setAttribute('aria-label', i18n.t('assign.addBtn'));
+    fab.onclick = () => openForm(null);
+    body.appendChild(fab);
+
+    Data.departments().forEach(d => filtersRow.querySelector('#assign-filter-dept')
+      .appendChild(new Option(d.name, d.id)));
+    Data.deviceTypes().forEach(t => filtersRow.querySelector('#assign-filter-type')
+      .appendChild(new Option(t.name, t.id)));
+
+    searchBar.querySelector('#assign-search').value = filters.search;
+    filtersRow.querySelector('#assign-filter-dept').value = filters.deptId;
+    filtersRow.querySelector('#assign-filter-type').value = filters.typeId;
+    filtersRow.querySelector('#assign-filter-status').value = filters.status;
+
+    searchBar.querySelector('#assign-search').addEventListener('input', e => { filters.search = e.target.value; renderList(); });
+    filtersRow.querySelector('#assign-filter-dept').addEventListener('change', e => { filters.deptId = e.target.value; renderList(); });
+    filtersRow.querySelector('#assign-filter-type').addEventListener('change', e => { filters.typeId = e.target.value; renderList(); });
+    filtersRow.querySelector('#assign-filter-status').addEventListener('change', e => { filters.status = e.target.value; renderList(); });
+
+    renderList();
+  }
+
+  function renderList(){
+    const listEl = document.getElementById('assign-list');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+    const q = filters.search.trim().toLowerCase();
+    let records = Data.assignments().filter(a => {
+      if (filters.status && a.status !== filters.status) return false;
+      if (filters.typeId && String(a.deviceTypeId) !== String(filters.typeId)) return false;
+      if (filters.deptId && String(Data.assignmentDeptId(a)) !== String(filters.deptId)) return false;
+      if (q){
+        const hay = [
+          a.status==='assigned' ? Data.empName(a.employeeId) : (a.locationNote||''),
+          Data.typeName(a.deviceTypeId), a.model, a.serialNumber, a.assetTag, a.ipAddress, a.notes
+        ].join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    }).sort((a,b) => (b.updatedAt||b.createdAt||0) - (a.updatedAt||a.createdAt||0));
+
+    if (!records.length){ UI.renderEmpty(listEl, i18n.t('assign.noRecords')); return; }
+
+    records.forEach(a => {
+      const deptId = Data.assignmentDeptId(a);
+      const title = a.status === 'assigned' ? Data.empName(a.employeeId) : (a.locationNote || Data.deptName(deptId));
+      const subParts = [Data.typeName(a.deviceTypeId)];
+      if (deptId) subParts.push(Data.deptName(deptId));
+      if (a.model) subParts.push(a.model);
+      if (a.serialNumber) subParts.push('SN: ' + a.serialNumber);
+      const card = UI.renderTemplate('record-card', {
+        'self': { attr:'data-id', value:a.id },
+        '.record-title': { text: title || '-' },
+        '.record-sub': { text: subParts.filter(Boolean).join(' • ') },
+      });
+      const tags = card.querySelector('.record-tags');
+      const statusTag = document.createElement('span');
+      statusTag.className = 'tag ' + (a.status==='assigned' ? 'tag-status-assigned' : 'tag-status-unassigned');
+      statusTag.textContent = i18n.t(a.status==='assigned' ? 'assign.statusAssigned' : 'assign.statusUnassigned');
+      tags.appendChild(statusTag);
+      (a.serviceIds||[]).forEach(sid => {
+        const name = Data.svcName(sid);
+        if (!name) return;
+        const t = document.createElement('span'); t.className = 'tag'; t.textContent = name;
+        tags.appendChild(t);
+      });
+      card.querySelector('.btn-edit').onclick = () => openForm(a);
+      card.querySelector('.btn-delete').onclick = () => {
+        UI.confirmDanger({
+          title: i18n.t('common.delete'),
+          message: i18n.t('assign.deleteConfirm'),
+          onConfirm: () => { Store.remove('assignments', a.id); UI.showToast(i18n.t('toast.deleted'),'success'); renderList(); DashboardModule.markDirty(); }
+        });
+      };
+      listEl.appendChild(card);
+    });
+    i18n.applyToDOM();
+  }
+
+  function openForm(record){
+    const isEdit = !!record;
+    const status = record?.status || 'assigned';
+    let selEmployeeId = record?.employeeId ?? null;
+    let selDeptId = record?.status==='unassigned' ? (record?.departmentId ?? null) : null;
+    let selTypeId = record?.deviceTypeId ?? null;
+
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="segmented" id="assign-status-toggle">
+        <button type="button" data-status="assigned">${UI.sanitize(i18n.t('assign.statusAssigned'))}</button>
+        <button type="button" data-status="unassigned">${UI.sanitize(i18n.t('assign.statusUnassigned'))}</button>
+      </div>
+      <div id="assign-employee-block" class="form-group combo">
+        <label>${UI.sanitize(i18n.t('assign.employeeLabel'))}</label>
+        <input type="text" id="assign-employee-search" placeholder="${UI.sanitize(i18n.t('assign.employeeSearchPlaceholder'))}" autocomplete="off">
+      </div>
+      <div id="assign-dept-block" class="form-group combo">
+        <label>${UI.sanitize(i18n.t('assign.departmentLabel'))}</label>
+        <input type="text" id="assign-dept-search" placeholder="${UI.sanitize(i18n.t('assign.departmentLabel'))}" autocomplete="off">
+      </div>
+      <div id="assign-location-block" class="form-group">
+        <label>${UI.sanitize(i18n.t('assign.locationNote'))}</label>
+        <input type="text" id="assign-location-note" value="${UI.sanitize(record?.locationNote||'')}">
+      </div>
+      <div class="form-group combo">
+        <label>${UI.sanitize(i18n.t('assign.deviceTypeLabel'))}</label>
+        <input type="text" id="assign-devicetype-search" placeholder="${UI.sanitize(i18n.t('assign.deviceTypeSearchPlaceholder'))}" autocomplete="off">
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>${UI.sanitize(i18n.t('assign.model'))}</label><input type="text" id="assign-model" value="${UI.sanitize(record?.model||'')}"></div>
+        <div class="form-group"><label>${UI.sanitize(i18n.t('assign.serialNumber'))}</label><input type="text" id="assign-serial" value="${UI.sanitize(record?.serialNumber||'')}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>${UI.sanitize(i18n.t('assign.assetTag'))}</label><input type="text" id="assign-assettag" value="${UI.sanitize(record?.assetTag||'')}"></div>
+        <div class="form-group"><label>${UI.sanitize(i18n.t('assign.ipAddress'))}</label><input type="text" id="assign-ip" value="${UI.sanitize(record?.ipAddress||'')}"></div>
+      </div>
+      <div class="form-group">
+        <label>${UI.sanitize(i18n.t('assign.servicesLabel'))}</label>
+        <div class="service-chips" id="assign-services"></div>
+      </div>
+      <div class="form-group">
+        <label>${UI.sanitize(i18n.t('assign.notes'))}</label>
+        <textarea id="assign-notes">${UI.sanitize(record?.notes||'')}</textarea>
+      </div>`;
+
+    const svcContainer = wrap.querySelector('#assign-services');
+    if (!Data.services().length){
+      svcContainer.innerHTML = `<span class="empty-state" style="padding:.4rem 0">${UI.sanitize(i18n.t('common.noData'))}</span>`;
+    }
+    Data.services().forEach(s => {
+      const chip = UI.renderTemplate('service-chip', {});
+      chip.querySelector('.service-chip-label').textContent = s.name;
+      const input = chip.querySelector('.service-chip-input');
+      input.value = s.id;
+      input.checked = !!(record?.serviceIds||[]).includes(s.id);
+      svcContainer.appendChild(chip);
+    });
+
+    const empSearch = wrap.querySelector('#assign-employee-search');
+    const deptSearch = wrap.querySelector('#assign-dept-search');
+    const typeSearch = wrap.querySelector('#assign-devicetype-search');
+    if (selEmployeeId) empSearch.value = Data.empName(selEmployeeId);
+    if (selDeptId) deptSearch.value = Data.deptName(selDeptId);
+    if (selTypeId) typeSearch.value = Data.typeName(selTypeId);
+
+    UI.attachCombo(empSearch, wrap.querySelector('#assign-employee-block'),
+      () => Data.employees().map(e => ({ id:e.id, label:e.name + (e.departmentId ? ' — ' + Data.deptName(e.departmentId) : '') })),
+      (id) => { selEmployeeId = id; });
+    UI.attachCombo(deptSearch, wrap.querySelector('#assign-dept-block'),
+      () => Data.departments().map(d => ({ id:d.id, label:d.name })),
+      (id) => { selDeptId = id; });
+    UI.attachCombo(typeSearch, typeSearch.closest('.combo'),
+      () => Data.deviceTypes().map(t => ({ id:t.id, label:t.name })),
+      (id) => { selTypeId = id; });
+
+    function applyStatusVisibility(st){
+      wrap.querySelectorAll('#assign-status-toggle button').forEach(b => b.classList.toggle('active', b.dataset.status===st));
+      wrap.querySelector('#assign-employee-block').classList.toggle('hidden', st!=='assigned');
+      wrap.querySelector('#assign-dept-block').classList.toggle('hidden', st!=='unassigned');
+      wrap.querySelector('#assign-location-block').classList.toggle('hidden', st!=='unassigned');
+    }
+    let curStatus = status;
+    applyStatusVisibility(curStatus);
+    wrap.querySelectorAll('#assign-status-toggle button').forEach(b => {
+      b.onclick = () => { curStatus = b.dataset.status; applyStatusVisibility(curStatus); };
+    });
+
+    UI.showModal({
+      title: i18n.t(isEdit ? 'assign.editTitle' : 'assign.addTitle'),
+      bodyEl: wrap,
+      confirmText: i18n.t('common.save'),
+      onConfirm: () => {
+        if (!selTypeId){ UI.showToast(i18n.t('assign.selectDeviceTypeFirst'),'error'); return false; }
+        if (curStatus==='assigned' && !selEmployeeId){ UI.showToast(i18n.t('assign.selectEmployeeFirst'),'error'); return false; }
+        if (curStatus==='unassigned' && !selDeptId){ UI.showToast(i18n.t('assign.selectDeptFirst'),'error'); return false; }
+        const serviceIds = Array.from(wrap.querySelectorAll('.service-chip-input:checked')).map(i => Number(i.value));
+        const payload = {
+          id: record?.id,
+          status: curStatus,
+          employeeId: curStatus==='assigned' ? selEmployeeId : null,
+          departmentId: curStatus==='unassigned' ? selDeptId : null,
+          locationNote: curStatus==='unassigned' ? wrap.querySelector('#assign-location-note').value.trim() : '',
+          deviceTypeId: selTypeId,
+          model: wrap.querySelector('#assign-model').value.trim(),
+          serialNumber: wrap.querySelector('#assign-serial').value.trim(),
+          assetTag: wrap.querySelector('#assign-assettag').value.trim(),
+          ipAddress: wrap.querySelector('#assign-ip').value.trim(),
+          notes: wrap.querySelector('#assign-notes').value.trim(),
+          serviceIds,
+        };
+        Store.upsert('assignments', payload);
+        UI.showToast(i18n.t('toast.saved'), 'success');
+        renderList();
+        DashboardModule.markDirty();
+      }
+    });
+  }
+
+  function init(){ render(); }
+  return { init, render, renderList };
+})();
+
+/* ============================== Lists Module (Departments / Employees / DeviceTypes / Services) ============================== */
+const ListsModule = (() => {
+  let activeTab = 'departments';
+  let searchQ = '';
+
+  const TABS = [
+    { key:'departments', titleKey:'lists.departments' },
+    { key:'employees',   titleKey:'lists.employees' },
+    { key:'deviceTypes', titleKey:'lists.deviceTypes' },
+    { key:'services',    titleKey:'lists.services' },
+  ];
+
+  function pickField(record, aliases){
+    const keys = Object.keys(record);
+    for (const alias of aliases){
+      const k = keys.find(k => k.trim().toLowerCase() === alias.toLowerCase());
+      if (k !== undefined && record[k] !== '') return record[k];
+    }
+    return '';
+  }
+
+  function renderTabs(){
+    const tabsEl = document.getElementById('lists-tabs');
+    tabsEl.innerHTML = '';
+    TABS.forEach(t => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = i18n.t(t.titleKey);
+      btn.className = activeTab===t.key ? 'active' : '';
+      btn.onclick = () => { activeTab = t.key; searchQ=''; render(); };
+      tabsEl.appendChild(btn);
+    });
+  }
+
+  function render(){
+    renderTabs();
+    const body = document.querySelector('#lists .module-body');
+    body.innerHTML = '';
+    if (activeTab === 'departments') renderSimple(body, {
+      collection:'departments', addKey:'lists.addDepartment', usageKey:'departments',
+      aliases:['name','الاسم','الإسم','اسم الادارة','اسم الإدارة'],
+    });
+    else if (activeTab === 'deviceTypes') renderSimple(body, {
+      collection:'deviceTypes', addKey:'lists.addDeviceType', usageKey:'deviceTypes',
+      aliases:['name','الاسم','الإسم','اسم الجهاز'],
+    });
+    else if (activeTab === 'services') renderSimple(body, {
+      collection:'services', addKey:'lists.addService', usageKey:'services',
+      aliases:['name','الاسم','الإسم','اسم الخدمة'],
+    });
+    else if (activeTab === 'employees') renderEmployees(body);
+  }
+
+  /* ---------- Generic simple (name-only) list: departments / deviceTypes / services ---------- */
+  function renderSimple(body, cfg){
+    const head = document.createElement('div');
+    head.className = 'section-head';
+    head.innerHTML = `<h2>${UI.sanitize(i18n.t(TABS.find(t=>t.key===cfg.collection)?.titleKey || ''))}</h2>`;
+    body.appendChild(head);
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'import-actions';
+    toolbar.innerHTML = `
+      <button class="btn btn-primary btn-sm" id="ls-add">${UI.sanitize(i18n.t(cfg.addKey))}</button>
+      <button class="btn btn-secondary btn-sm" id="ls-import">${UI.sanitize(i18n.t('common.import'))}</button>
+      <button class="btn btn-secondary btn-sm" id="ls-export">${UI.sanitize(i18n.t('common.export'))}</button>`;
+    body.appendChild(toolbar);
+
+    const searchBar = document.createElement('div');
+    searchBar.className = 'search-bar';
+    searchBar.innerHTML = `<input type="search" id="ls-search" placeholder="${UI.sanitize(i18n.t('common.search'))}" value="${UI.sanitize(searchQ)}">`;
+    body.appendChild(searchBar);
+
+    const listEl = document.createElement('div');
+    body.appendChild(listEl);
+
+    function renderList(){
+      listEl.innerHTML = '';
+      const q = searchQ.trim().toLowerCase();
+      const items = (Store.get(cfg.collection)||[])
+        .filter(i => !q || i.name.toLowerCase().includes(q))
+        .sort((a,b)=> a.name.localeCompare(b.name, 'ar'));
+      if (!items.length){ UI.renderEmpty(listEl, i18n.t('lists.noItems')); return; }
+      items.forEach(item => {
+        const card = UI.renderTemplate('simple-card', {
+          'self': { attr:'data-id', value:item.id },
+          '.simple-card-name': { text: item.name },
+        });
+        card.querySelector('.btn-edit').onclick = () => openEdit(item);
+        card.querySelector('.btn-delete').onclick = () => {
+          const usage = Data.countUsage(cfg.usageKey, null, item.id);
+          if (usage > 0){ UI.showToast(i18n.t('lists.usedByDevices',{n:usage}), 'error'); return; }
+          UI.confirmDanger({
+            title: i18n.t('common.delete'),
+            message: i18n.t('lists.deleteConfirmName',{name:item.name}),
+            onConfirm: () => { Store.remove(cfg.collection, item.id); UI.showToast(i18n.t('toast.deleted'),'success'); renderList(); DashboardModule.markDirty(); }
+          });
+        };
+        listEl.appendChild(card);
+      });
+      i18n.applyToDOM();
+    }
+
+    function openEdit(item){
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `<div class="form-group"><label>${UI.sanitize(i18n.t('lists.nameLabel'))}</label>
+        <input type="text" id="ls-name" value="${UI.sanitize(item?.name||'')}"></div>`;
+      UI.showModal({
+        title: i18n.t(item ? 'common.edit' : cfg.addKey),
+        bodyEl: wrap,
+        onConfirm: () => {
+          const name = wrap.querySelector('#ls-name').value.trim();
+          if (!name){ UI.showToast(i18n.t('toast.required'),'error'); return false; }
+          Store.upsert(cfg.collection, { id:item?.id, name });
+          UI.showToast(i18n.t('toast.saved'),'success');
+          renderList();
+        }
+      });
+    }
+
+    searchBar.querySelector('#ls-search').addEventListener('input', e => { searchQ = e.target.value; renderList(); });
+    toolbar.querySelector('#ls-add').onclick = () => openEdit(null);
+    toolbar.querySelector('#ls-export').onclick = () => {
+      const rows = (Store.get(cfg.collection)||[]).map(i => ({ name:i.name }));
+      CSV.download(cfg.collection + '.csv', CSV.stringify(['name'], rows));
+      UI.showToast(i18n.t('toast.exported'),'success');
+    };
+    toolbar.querySelector('#ls-import').onclick = () => openImport({
+      collection: cfg.collection,
+      buildRecord: (rec) => {
+        const name = pickField(rec, cfg.aliases);
+        return name ? { name: String(name).trim() } : null;
+      },
+      dedupeKey: r => r.name.toLowerCase(),
+      existingKeys: () => new Set((Store.get(cfg.collection)||[]).map(i=>i.name.toLowerCase())),
+    });
+
+    renderList();
+  }
+
+  /* ---------- Employees (name + department + code + jobTitle) ---------- */
+  function renderEmployees(body){
+    const head = document.createElement('div');
+    head.className = 'section-head';
+    head.innerHTML = `<h2>${UI.sanitize(i18n.t('lists.employees'))}</h2>`;
+    body.appendChild(head);
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'import-actions';
+    toolbar.innerHTML = `
+      <button class="btn btn-primary btn-sm" id="ls-add">${UI.sanitize(i18n.t('lists.addEmployee'))}</button>
+      <button class="btn btn-secondary btn-sm" id="ls-import">${UI.sanitize(i18n.t('common.import'))}</button>
+      <button class="btn btn-secondary btn-sm" id="ls-export">${UI.sanitize(i18n.t('common.export'))}</button>`;
+    body.appendChild(toolbar);
+
+    const searchBar = document.createElement('div');
+    searchBar.className = 'search-bar';
+    searchBar.innerHTML = `<input type="search" id="ls-search" placeholder="${UI.sanitize(i18n.t('common.search'))}" value="${UI.sanitize(searchQ)}">`;
+    body.appendChild(searchBar);
+
+    const filterRow = document.createElement('div');
+    filterRow.className = 'filters-row';
+    filterRow.innerHTML = `<select id="ls-emp-dept-filter"><option value="">${UI.sanitize(i18n.t('assign.filterDept'))}</option></select>`;
+    body.appendChild(filterRow);
+    Data.departments().forEach(d => filterRow.querySelector('#ls-emp-dept-filter').appendChild(new Option(d.name, d.id)));
+
+    const listEl = document.createElement('div');
+    body.appendChild(listEl);
+    let deptFilter = '';
+
+    function renderList(){
+      listEl.innerHTML = '';
+      const q = searchQ.trim().toLowerCase();
+      const items = Data.employees()
+        .filter(e => !q || e.name.toLowerCase().includes(q) || (e.employeeCode||'').toLowerCase().includes(q))
+        .filter(e => !deptFilter || String(e.departmentId)===String(deptFilter))
+        .sort((a,b)=> a.name.localeCompare(b.name,'ar'));
+      if (!items.length){ UI.renderEmpty(listEl, i18n.t('lists.noItems')); return; }
+      items.forEach(item => {
+        const card = UI.renderTemplate('record-card', {
+          'self': { attr:'data-id', value:item.id },
+          '.record-title': { text: item.name },
+          '.record-sub': { text: [Data.deptName(item.departmentId), item.jobTitle, item.employeeCode].filter(Boolean).join(' • ') },
+        });
+        const deviceCount = Data.countUsage('employees', null, item.id);
+        if (deviceCount){
+          const tag = document.createElement('span'); tag.className='tag'; tag.textContent = deviceCount + ' 🖥️';
+          card.querySelector('.record-tags').appendChild(tag);
+        }
+        card.querySelector('.btn-edit').onclick = () => openEdit(item);
+        card.querySelector('.btn-delete').onclick = () => {
+          const usage = Data.countUsage('employees', null, item.id);
+          if (usage > 0){ UI.showToast(i18n.t('lists.usedByDevices',{n:usage}), 'error'); return; }
+          UI.confirmDanger({
+            title: i18n.t('common.delete'),
+            message: i18n.t('lists.deleteConfirmName',{name:item.name}),
+            onConfirm: () => { Store.remove('employees', item.id); UI.showToast(i18n.t('toast.deleted'),'success'); renderList(); DashboardModule.markDirty(); }
+          });
+        };
+        listEl.appendChild(card);
+      });
+      i18n.applyToDOM();
+    }
+
+    function openEdit(item){
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `
+        <div class="form-group"><label>${UI.sanitize(i18n.t('lists.nameLabel'))}</label>
+          <input type="text" id="emp-name" value="${UI.sanitize(item?.name||'')}"></div>
+        <div class="form-group"><label>${UI.sanitize(i18n.t('lists.departmentLabel'))}</label>
+          <select id="emp-dept"><option value="">${UI.sanitize(i18n.t('lists.noDepartment'))}</option></select></div>
+        <div class="form-row">
+          <div class="form-group"><label>${UI.sanitize(i18n.t('lists.employeeCode'))}</label>
+            <input type="text" id="emp-code" value="${UI.sanitize(item?.employeeCode||'')}"></div>
+          <div class="form-group"><label>${UI.sanitize(i18n.t('lists.jobTitle'))}</label>
+            <input type="text" id="emp-title" value="${UI.sanitize(item?.jobTitle||'')}"></div>
+        </div>`;
+      const sel = wrap.querySelector('#emp-dept');
+      Data.departments().forEach(d => sel.appendChild(new Option(d.name, d.id)));
+      sel.value = item?.departmentId ?? '';
+      UI.showModal({
+        title: i18n.t(item ? 'common.edit' : 'lists.addEmployee'),
+        bodyEl: wrap,
+        onConfirm: () => {
+          const name = wrap.querySelector('#emp-name').value.trim();
+          if (!name){ UI.showToast(i18n.t('toast.required'),'error'); return false; }
+          const deptVal = wrap.querySelector('#emp-dept').value;
+          Store.upsert('employees', {
+            id:item?.id, name,
+            departmentId: deptVal ? Number(deptVal) : null,
+            employeeCode: wrap.querySelector('#emp-code').value.trim(),
+            jobTitle: wrap.querySelector('#emp-title').value.trim(),
+          });
+          UI.showToast(i18n.t('toast.saved'),'success');
+          renderList();
+        }
+      });
+    }
+
+    searchBar.querySelector('#ls-search').addEventListener('input', e => { searchQ = e.target.value; renderList(); });
+    filterRow.querySelector('#ls-emp-dept-filter').addEventListener('change', e => { deptFilter = e.target.value; renderList(); });
+    toolbar.querySelector('#ls-add').onclick = () => openEdit(null);
+    toolbar.querySelector('#ls-export').onclick = () => {
+      const rows = Data.employees().map(e => ({ name:e.name, department:Data.deptName(e.departmentId), code:e.employeeCode||'', jobTitle:e.jobTitle||'' }));
+      CSV.download('employees.csv', CSV.stringify(['name','department','code','jobTitle'], rows));
+      UI.showToast(i18n.t('toast.exported'),'success');
+    };
+    toolbar.querySelector('#ls-import').onclick = () => openImport({
+      collection: 'employees',
+      buildRecord: (rec) => {
+        const name = pickField(rec, ['name','الاسم','الإسم','اسم الموظف']);
+        if (!name) return null;
+        return {
+          name: String(name).trim(),
+          departmentName: String(pickField(rec, ['department','الادارة','الإدارة','القسم']) || '').trim(),
+          employeeCode: String(pickField(rec, ['code','employeeCode','الرقم الوظيفي','كود']) || '').trim(),
+          jobTitle: String(pickField(rec, ['jobTitle','title','المسمى الوظيفي','الوظيفة']) || '').trim(),
+        };
+      },
+      dedupeKey: r => r.name.toLowerCase(),
+      existingKeys: () => new Set(Data.employees().map(e=>e.name.toLowerCase())),
+      finalize: (r) => {
+        const { departmentName, ...rest } = r;
+        let departmentId = null;
+        if (departmentName){
+          let dept = Data.departments().find(d => d.name.toLowerCase() === departmentName.toLowerCase());
+          if (!dept) dept = Store.upsert('departments', { name: departmentName });
+          departmentId = dept.id;
+        }
+        return { ...rest, departmentId };
+      },
+    });
+
+    renderList();
+  }
+
+  /* ---------- Shared import flow (CSV / XLSX) with preview ---------- */
+  function openImport({ collection, buildRecord, dedupeKey, existingKeys, finalize }){
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = '.csv,.xlsx,text/csv';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try{
+        let parsed;
+        if (/\.xlsx$/i.test(file.name)){
+          if (!XLSX.supported()){ UI.showToast(i18n.t('toast.invalidFile'),'error'); return; }
+          parsed = await XLSX.readFirstSheet(await file.arrayBuffer());
+        } else {
+          parsed = CSV.parse(await file.text());
+        }
+        if (!parsed.records.length){ UI.showToast(i18n.t('toast.invalidFile'),'error'); return; }
+        showPreview(parsed);
+      }catch(err){ console.error(err); UI.showToast(i18n.t('toast.invalidFile'),'error'); }
+    };
+    input.click();
+
+    function showPreview(parsed){
+      const built = parsed.records.map(buildRecord).filter(Boolean);
+      const existing = existingKeys();
+      const fresh = [];
+      const seen = new Set();
+      built.forEach(r => {
+        const key = dedupeKey(r);
+        if (existing.has(key) || seen.has(key)) return;
+        seen.add(key); fresh.push(r);
+      });
+
+      const wrap = document.createElement('div');
+      const info = document.createElement('p');
+      info.textContent = i18n.t('lists.importRowsFound', { n: fresh.length });
+      info.style.marginBottom = '.5rem';
+      wrap.appendChild(info);
+
+      const tableWrap = document.createElement('div');
+      tableWrap.className = 'import-preview-wrap';
+      const table = document.createElement('table');
+      table.className = 'import-preview-table';
+      const cols = fresh.length ? Object.keys(fresh[0]) : [];
+      table.innerHTML = '<thead><tr>' + cols.map(c=>`<th>${UI.sanitize(c)}</th>`).join('') + '</tr></thead>';
+      const tbody = document.createElement('tbody');
+      fresh.slice(0, 30).forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = cols.map(c => `<td>${UI.sanitize(r[c] ?? '')}</td>`).join('');
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      tableWrap.appendChild(table);
+      wrap.appendChild(tableWrap);
+
+      UI.showModal({
+        title: i18n.t('lists.importPreviewTitle'),
+        bodyEl: wrap,
+        confirmText: i18n.t('lists.importConfirm'),
+        onConfirm: () => {
+          if (!fresh.length){ UI.showToast(i18n.t('toast.invalidFile'),'error'); return false; }
+          fresh.forEach(r => Store.upsert(collection, finalize ? finalize(r) : r));
+          UI.showToast(i18n.t('toast.imported', { n: fresh.length }), 'success');
+          render();
+          DashboardModule.markDirty();
+        }
+      });
+    }
+  }
+
+  function init(){ render(); }
+  return { init, render };
+})();
+
+/* ============================== Dashboard Module ============================== */
+const DashboardModule = (() => {
+  function render(){
+    const body = document.querySelector('#dashboard .module-body');
+    body.innerHTML = '';
+    const head = document.createElement('div');
+    head.className = 'section-head';
+    head.innerHTML = `<h2>${UI.sanitize(i18n.t('dashboard.title'))}</h2>`;
+    body.appendChild(head);
+
+    const list = Data.assignments();
+
+    // By device type
+    const byTypeCard = document.createElement('div');
+    byTypeCard.className = 'card chart-card';
+    byTypeCard.innerHTML = `<h3>${UI.sanitize(i18n.t('dashboard.byType'))}</h3><div class="chart-holder"></div>`;
+    body.appendChild(byTypeCard);
+    const typeCounts = {};
+    list.forEach(a => { const n = Data.typeName(a.deviceTypeId) || '-'; typeCounts[n] = (typeCounts[n]||0)+1; });
+    Charts.donut(byTypeCard.querySelector('.chart-holder'),
+      Object.entries(typeCounts).sort((a,b)=>b[1]-a[1]).map(([label,value])=>({label,value})));
+
+    // By department
+    const byDeptCard = document.createElement('div');
+    byDeptCard.className = 'card chart-card';
+    byDeptCard.innerHTML = `<h3>${UI.sanitize(i18n.t('dashboard.byDepartment'))}</h3><div class="chart-holder"></div>`;
+    body.appendChild(byDeptCard);
+    const deptCounts = {};
+    list.forEach(a => { const n = Data.deptName(Data.assignmentDeptId(a)) || '-'; deptCounts[n] = (deptCounts[n]||0)+1; });
+    Charts.bars(byDeptCard.querySelector('.chart-holder'),
+      Object.entries(deptCounts).sort((a,b)=>b[1]-a[1]).map(([label,value])=>({label,value})));
+
+    // Assigned vs unassigned
+    const statusCard = document.createElement('div');
+    statusCard.className = 'card chart-card';
+    statusCard.innerHTML = `<h3>${UI.sanitize(i18n.t('dashboard.assignedVsUnassigned'))}</h3><div class="chart-holder"></div>`;
+    body.appendChild(statusCard);
+    const assignedCount = list.filter(a=>a.status==='assigned').length;
+    const unassignedCount = list.filter(a=>a.status==='unassigned').length;
+    Charts.donut(statusCard.querySelector('.chart-holder'), [
+      { label: i18n.t('dashboard.assigned'), value: assignedCount },
+      { label: i18n.t('dashboard.unassigned'), value: unassignedCount },
+    ]);
+  }
+
+  function markDirty(){
+    if (!document.getElementById('dashboard').classList.contains('hidden')) render();
+  }
+
+  function init(){ render(); }
+  return { init, render, markDirty };
+})();
+
+/* ============================== Settings Module ============================== */
+const SettingsModule = (() => {
+  function render(){
+    const body = document.querySelector('#settings .module-body');
+    body.innerHTML = '';
+    const head = document.createElement('div');
+    head.className = 'section-head';
+    head.innerHTML = `<h2>${UI.sanitize(i18n.t('settings.title'))}</h2>`;
+    body.appendChild(head);
+
+    // Language card
+    const langCard = document.createElement('div');
+    langCard.className = 'card';
+    langCard.innerHTML = `
+      <div class="form-group">
+        <label>${UI.sanitize(i18n.t('settings.language'))}</label>
+        <select id="set-lang">
+          <option value="ar">العربية</option>
+          <option value="en">English</option>
+        </select>
+      </div>`;
+    body.appendChild(langCard);
+    langCard.querySelector('#set-lang').value = i18n.current();
+    langCard.querySelector('#set-lang').addEventListener('change', e => {
+      Store.set('language', e.target.value);
+    });
+
+    // Backup card
+    const backupCard = document.createElement('div');
+    backupCard.className = 'card';
+    backupCard.innerHTML = `
+      <h3 style="margin-bottom:.6rem">${UI.sanitize(i18n.t('settings.backup'))}</h3>
+      <p style="color:var(--text-muted); font-size:.82rem; margin-bottom:.7rem">${UI.sanitize(i18n.t('settings.about'))}</p>
+      <div class="import-actions">
+        <button class="btn btn-secondary btn-sm" id="set-export">${UI.sanitize(i18n.t('settings.export'))}</button>
+        <button class="btn btn-secondary btn-sm" id="set-import">${UI.sanitize(i18n.t('settings.import'))}</button>
+      </div>`;
+    body.appendChild(backupCard);
+    backupCard.querySelector('#set-export').onclick = exportBackup;
+    backupCard.querySelector('#set-import').onclick = importBackup;
+
+    // Danger zone
+    const dangerCard = document.createElement('div');
+    dangerCard.className = 'card';
+    dangerCard.innerHTML = `
+      <h3 style="margin-bottom:.6rem; color:var(--danger)">${UI.sanitize(i18n.t('settings.dangerZone'))}</h3>
+      <button class="btn btn-danger btn-sm" id="set-clear">${UI.sanitize(i18n.t('settings.clearAll'))}</button>`;
+    body.appendChild(dangerCard);
+    dangerCard.querySelector('#set-clear').onclick = () => {
+      UI.confirmDanger({
+        title: i18n.t('settings.clearAllConfirm'),
+        message: i18n.t('settings.clearAllWarn'),
+        onConfirm: () => {
+          ['departments','employees','deviceTypes','services','assignments'].forEach(c => Store.set(c, []));
+          UI.showToast(i18n.t('toast.deleted'),'success');
+          App.rerender();
+        }
+      });
+    };
+  }
+
+  function exportBackup(){
+    const snapshot = {
+      _meta: { exportedAt: new Date().toISOString(), version: 1 },
+      departments: Store.get('departments'), employees: Store.get('employees'),
+      deviceTypes: Store.get('deviceTypes'), services: Store.get('services'),
+      assignments: Store.get('assignments'), language: Store.get('language'),
+    };
+    const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), { href:url, download:`device-inventory-backup-${new Date().toISOString().slice(0,10)}.json` });
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    UI.showToast(i18n.t('toast.exported'),'success');
+  }
+
+  function importBackup(){
+    const input = Object.assign(document.createElement('input'), { type:'file', accept:'.json,application/json' });
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try{
+        const snapshot = JSON.parse(await file.text());
+        const { _meta, ...rest } = snapshot;
+        Store.replaceAll(rest);
+        UI.showToast(i18n.t('toast.imported', { n: (rest.assignments||[]).length }), 'success');
+        App.rerender();
+      }catch(err){ console.error(err); UI.showToast(i18n.t('toast.invalidFile'),'error'); }
+    };
+    input.click();
+  }
+
+  function init(){ render(); }
+  return { init, render };
+})();
+
+/* ============================== App (router + bootstrap) ============================== */
+const App = (() => {
+  const routes = {
+    assign: AssignModule,
+    lists: ListsModule,
+    dashboard: DashboardModule,
+    settings: SettingsModule,
+  };
+  let current = 'assign';
+
+  function navigate(target){
+    if (!routes[target]) return;
+    current = target;
+    document.querySelectorAll('#app-content .view').forEach(s => s.classList.add('hidden'));
+    document.querySelectorAll('#bottom-nav .nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(target)?.classList.remove('hidden');
+    document.querySelector(`[data-nav="${target}"]`)?.classList.add('active');
+    routes[target]?.init?.();
+  }
+
+  function rerender(){
+    i18n.applyToDOM();
+    updateLangButton();
+    routes[current]?.render?.();
+  }
+
+  function updateLangButton(){
+    const btn = document.getElementById('btn-lang-toggle');
+    const lang = i18n.current();
+    btn.textContent = lang === 'ar' ? 'EN' : 'AR';
+    btn.onclick = () => Store.set('language', lang === 'ar' ? 'en' : 'ar');
+  }
+
+  function setManifest(){
+    const manifest = {
+      name: i18n.t('app.title'), short_name: i18n.t('app.title'),
+      start_url: location.pathname, display: 'standalone',
+      background_color: '#f1f5f9', theme_color: '#2563eb',
+      lang: i18n.current(), dir: i18n.current()==='ar' ? 'rtl' : 'ltr',
+      icons: [{
+        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%232563eb'/%3E%3Crect x='18' y='24' width='64' height='40' rx='4' fill='white'/%3E%3Crect x='30' y='70' width='40' height='8' rx='3' fill='white'/%3E%3C/svg%3E",
+        sizes: '100x100', type: 'image/svg+xml', purpose: 'any maskable'
+      }]
+    };
+    try{
+      const json = JSON.stringify(manifest);
+      const b64 = btoa(unescape(encodeURIComponent(json)));
+      document.getElementById('manifest-link').setAttribute('href', 'data:application/manifest+json;base64,' + b64);
+    }catch(e){ console.error('manifest build failed', e); }
+  }
+
+  function init(){
+    i18n.init();
+    updateLangButton();
+    setManifest();
+    Store.on('language', () => { updateLangButton(); setManifest(); });
+    document.querySelectorAll('#bottom-nav .nav-item').forEach(btn =>
+      btn.addEventListener('click', () => navigate(btn.dataset.nav)));
+    navigate('assign');
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+  return { navigate, rerender };
+})();
+</script>
+</body>
+</html>
