@@ -70,7 +70,11 @@ input,select,textarea{font-family:inherit}
 
 /* Cards */
 .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:.85rem; box-shadow:var(--shadow); margin-bottom:.6rem}
-.card-actions{display:flex; gap:.4rem; margin-top:.6rem}
+.card-actions{display:flex; gap:.4rem; margin-top:.6rem; flex-wrap:wrap}
+.btn-quick{background:#eef2ff; color:var(--primary)}
+.history-list{list-style:none; display:flex; flex-direction:column; gap:.35rem; font-size:.78rem; color:var(--text-muted); max-height:160px; overflow-y:auto; border-top:1px solid var(--border); padding-top:.6rem; margin-top:.4rem}
+.history-list li{display:flex; justify-content:space-between; gap:.5rem}
+.history-list .history-date{flex-shrink:0; opacity:.75}
 .simple-card{display:flex; align-items:center; justify-content:space-between; gap:.5rem; flex-wrap:wrap}
 .simple-card .card-actions{margin-top:0}
 .simple-card-name{font-weight:600; flex:1}
@@ -385,6 +389,17 @@ const i18n = (() => {
       'assign.selectEmployeeFirst':'Please choose an employee',
       'assign.selectDeptFirst':'Please choose a department',
       'assign.selectDeviceTypeFirst':'Please choose a device type',
+      'assign.reassign':'Reassign','assign.unassign':'Return to storage','assign.assignQuick':'Assign to employee',
+      'assign.reassignTitle':'Reassign Device','assign.reassignPrompt':'Choose the new employee',
+      'assign.assignQuickTitle':'Assign Device','assign.assignQuickPrompt':'Choose the employee',
+      'assign.unassignConfirmTitle':'Return this device to storage?',
+      'assign.unassignConfirmMsg':'It will be marked as unassigned under "{dept}". You can edit the location note anytime from Edit.',
+      'assign.history':'Change History',
+      'assign.historyCreated':'Record created',
+      'assign.historyReassigned':'Reassigned: {from} → {to}',
+      'assign.historyUnassigned':'Returned to storage ({dept}) — was with {from}',
+      'assign.historyAssignedFromStorage':'Assigned to {to} (was in storage)',
+      'assign.historyEdited':'Details edited',
       'lists.departments':'Departments','lists.employees':'Employees','lists.deviceTypes':'Device Types','lists.services':'Services',
       'lists.addDepartment':'Add Department','lists.addEmployee':'Add Employee',
       'lists.addDeviceType':'Add Device Type','lists.addService':'Add Service',
@@ -395,6 +410,9 @@ const i18n = (() => {
       'lists.noItems':'No items yet.','lists.deleteConfirmName':'Delete "{name}"?',
       'lists.chooseFile':'Choose File (CSV / XLSX)','lists.noDepartment':'— No department —',
       'lists.usedByDevices':'Cannot delete: used by {n} device record(s).',
+      'lists.employeeHasDevicesTitle':'This employee has assigned devices',
+      'lists.employeeHasDevicesMsg':'"{name}" has {n} assigned device(s). Return them to storage first, then delete the employee?',
+      'lists.releaseThenDelete':'Return devices & delete',
       'dashboard.title':'Statistics','dashboard.byType':'Devices by Type','dashboard.byDepartment':'Devices by Department',
       'dashboard.assignedVsUnassigned':'Assigned vs Unassigned','dashboard.noData':'Add some device records to see charts.',
       'dashboard.assigned':'Assigned','dashboard.unassigned':'Unassigned',
@@ -403,6 +421,7 @@ const i18n = (() => {
       'settings.dangerZone':'Danger Zone','settings.clearAll':'Erase All Data',
       'settings.clearAllConfirm':'Erase ALL data?','settings.clearAllWarn':'This deletes every department, employee, device type, service and assignment record permanently.',
       'settings.about':'This app stores all data locally on this device only. Use backup/restore to move data between devices.',
+      'settings.credit':'Idea & Implementation: Mahmoud Abdelrahman Al-Ansary',
     },
     ar: {
       'app.title':'حصر الأجهزة',
@@ -431,6 +450,17 @@ const i18n = (() => {
       'assign.selectEmployeeFirst':'يرجى اختيار الموظف',
       'assign.selectDeptFirst':'يرجى اختيار الإدارة',
       'assign.selectDeviceTypeFirst':'يرجى اختيار نوع الجهاز',
+      'assign.reassign':'نقل لموظف آخر','assign.unassign':'إرجاع للمخزن','assign.assignQuick':'تخصيص لموظف',
+      'assign.reassignTitle':'نقل الجهاز','assign.reassignPrompt':'اختر الموظف الجديد',
+      'assign.assignQuickTitle':'تخصيص الجهاز','assign.assignQuickPrompt':'اختر الموظف',
+      'assign.unassignConfirmTitle':'هل تريد إرجاع هذا الجهاز للمخزن؟',
+      'assign.unassignConfirmMsg':'سيصبح الجهاز غير مخصص تحت إدارة "{dept}". يمكنك تعديل ملاحظة الموقع لاحقًا من زر تعديل.',
+      'assign.history':'سجل التغييرات',
+      'assign.historyCreated':'تم إنشاء السجل',
+      'assign.historyReassigned':'تم النقل: {from} ← {to}',
+      'assign.historyUnassigned':'تم الإرجاع للمخزن ({dept}) — كان مع {from}',
+      'assign.historyAssignedFromStorage':'تم التخصيص لـ {to} (كان في المخزن)',
+      'assign.historyEdited':'تم تعديل البيانات',
       'lists.departments':'الإدارات','lists.employees':'الموظفون','lists.deviceTypes':'أنواع الأجهزة','lists.services':'الخدمات',
       'lists.addDepartment':'إضافة إدارة','lists.addEmployee':'إضافة موظف',
       'lists.addDeviceType':'إضافة نوع جهاز','lists.addService':'إضافة خدمة',
@@ -441,6 +471,9 @@ const i18n = (() => {
       'lists.noItems':'لا توجد عناصر بعد.','lists.deleteConfirmName':'هل تريد حذف "{name}"؟',
       'lists.chooseFile':'اختر ملف (CSV / XLSX)','lists.noDepartment':'— بدون إدارة —',
       'lists.usedByDevices':'لا يمكن الحذف: مستخدم في {n} سجل جهاز.',
+      'lists.employeeHasDevicesTitle':'هذا الموظف يمتلك أجهزة مخصصة',
+      'lists.employeeHasDevicesMsg':'"{name}" يمتلك {n} جهاز مخصص. هل تريد إرجاعها للمخزن أولاً ثم حذف الموظف؟',
+      'lists.releaseThenDelete':'إرجاع الأجهزة ثم الحذف',
       'dashboard.title':'الإحصائيات','dashboard.byType':'توزيع الأجهزة حسب النوع','dashboard.byDepartment':'توزيع الأجهزة حسب الإدارة',
       'dashboard.assignedVsUnassigned':'المخصصة مقابل غير المخصصة','dashboard.noData':'أضف بعض سجلات الأجهزة لعرض الرسوم البيانية.',
       'dashboard.assigned':'مخصصة','dashboard.unassigned':'غير مخصصة',
@@ -449,6 +482,7 @@ const i18n = (() => {
       'settings.dangerZone':'منطقة الخطر','settings.clearAll':'مسح جميع البيانات',
       'settings.clearAllConfirm':'هل تريد مسح كل البيانات؟','settings.clearAllWarn':'سيتم حذف جميع الإدارات والموظفين وأنواع الأجهزة والخدمات وسجلات الأجهزة نهائيًا.',
       'settings.about':'يخزّن هذا التطبيق كل البيانات محليًا على هذا الجهاز فقط. استخدم النسخ الاحتياطي للنقل بين الأجهزة.',
+      'settings.credit':'الفكرة والتنفيذ: محمود عبدالرحمن الأنصاري',
     }
   };
   let lang = 'ar';
@@ -908,13 +942,32 @@ const Data = (() => {
     }).length;
   }
 
+  function employeeAssignedDevices(employeeId){
+    return assignments().filter(a => a.status === 'assigned' && a.employeeId === employeeId);
+  }
+
   return { departments, employees, deviceTypes, services, assignments,
-           byId, deptName, empName, empDeptId, typeName, svcName, assignmentDeptId, countUsage };
+           byId, deptName, empName, empDeptId, typeName, svcName, assignmentDeptId, countUsage,
+           employeeAssignedDevices };
 })();
 
 /* ============================== Assign Module ============================== */
 const AssignModule = (() => {
   let filters = { search:'', deptId:'', typeId:'', status:'' };
+
+  function pushHistory(record, entry){
+    const history = Array.isArray(record.history) ? record.history.slice() : [];
+    history.push({ ts: Date.now(), ...entry });
+    return history;
+  }
+
+  function historyText(h){
+    if (h.action === 'created') return i18n.t('assign.historyCreated');
+    if (h.action === 'reassigned') return i18n.t('assign.historyReassigned', { from: h.fromName||'-', to: h.toName||'-' });
+    if (h.action === 'unassigned') return i18n.t('assign.historyUnassigned', { dept: h.deptName||'-', from: h.fromName||'-' });
+    if (h.action === 'assignedFromStorage') return i18n.t('assign.historyAssignedFromStorage', { to: h.toName||'-' });
+    return i18n.t('assign.historyEdited');
+  }
 
   function render(){
     const body = document.querySelector('#assign .module-body');
@@ -1015,6 +1068,26 @@ const AssignModule = (() => {
         const t = document.createElement('span'); t.className = 'tag'; t.textContent = name;
         tags.appendChild(t);
       });
+      const actions = card.querySelector('.card-actions');
+      if (a.status === 'assigned'){
+        const reassignBtn = document.createElement('button');
+        reassignBtn.className = 'btn btn-sm btn-quick'; reassignBtn.type = 'button';
+        reassignBtn.textContent = i18n.t('assign.reassign');
+        reassignBtn.onclick = () => quickReassign(a);
+        actions.insertBefore(reassignBtn, actions.firstChild);
+
+        const unassignBtn = document.createElement('button');
+        unassignBtn.className = 'btn btn-sm btn-quick'; unassignBtn.type = 'button';
+        unassignBtn.textContent = i18n.t('assign.unassign');
+        unassignBtn.onclick = () => quickUnassign(a);
+        actions.insertBefore(unassignBtn, actions.firstChild);
+      } else {
+        const assignBtn = document.createElement('button');
+        assignBtn.className = 'btn btn-sm btn-quick'; assignBtn.type = 'button';
+        assignBtn.textContent = i18n.t('assign.assignQuick');
+        assignBtn.onclick = () => quickAssignFromStorage(a);
+        actions.insertBefore(assignBtn, actions.firstChild);
+      }
       card.querySelector('.btn-edit').onclick = () => openForm(a);
       card.querySelector('.btn-delete').onclick = () => {
         UI.confirmDanger({
@@ -1026,6 +1099,86 @@ const AssignModule = (() => {
       listEl.appendChild(card);
     });
     i18n.applyToDOM();
+  }
+
+  function quickReassign(record){
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="form-group combo">
+        <label>${UI.sanitize(i18n.t('assign.reassignPrompt'))}</label>
+        <input type="text" id="quick-employee-search" placeholder="${UI.sanitize(i18n.t('assign.employeeSearchPlaceholder'))}" autocomplete="off">
+      </div>`;
+    let newEmployeeId = null;
+    const input = wrap.querySelector('#quick-employee-search');
+    UI.attachCombo(input, input.closest('.combo'),
+      () => Data.employees().filter(e => e.id !== record.employeeId).map(e => ({ id:e.id, label:e.name + (e.departmentId ? ' — ' + Data.deptName(e.departmentId) : '') })),
+      (id) => { newEmployeeId = id; });
+    UI.showModal({
+      title: i18n.t('assign.reassignTitle'),
+      bodyEl: wrap,
+      confirmText: i18n.t('assign.reassign'),
+      onConfirm: () => {
+        if (!newEmployeeId){ UI.showToast(i18n.t('assign.selectEmployeeFirst'),'error'); return false; }
+        const fromName = Data.empName(record.employeeId);
+        const toName = Data.empName(newEmployeeId);
+        Store.upsert('assignments', {
+          ...record, employeeId: newEmployeeId,
+          history: pushHistory(record, { action:'reassigned', fromName, toName }),
+        });
+        UI.showToast(i18n.t('toast.saved'),'success');
+        renderList(); DashboardModule.markDirty();
+      }
+    });
+  }
+
+  function quickUnassign(record){
+    const deptId = Data.empDeptId(record.employeeId);
+    const deptName = Data.deptName(deptId);
+    const p = document.createElement('p');
+    p.textContent = i18n.t('assign.unassignConfirmMsg', { dept: deptName || '-' });
+    UI.showModal({
+      title: i18n.t('assign.unassignConfirmTitle'),
+      bodyEl: p,
+      confirmText: i18n.t('assign.unassign'),
+      onConfirm: () => {
+        const fromName = Data.empName(record.employeeId);
+        Store.upsert('assignments', {
+          ...record, status:'unassigned', employeeId: null, departmentId: deptId, locationNote: '',
+          history: pushHistory(record, { action:'unassigned', deptName, fromName }),
+        });
+        UI.showToast(i18n.t('toast.saved'),'success');
+        renderList(); DashboardModule.markDirty();
+      }
+    });
+  }
+
+  function quickAssignFromStorage(record){
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="form-group combo">
+        <label>${UI.sanitize(i18n.t('assign.assignQuickPrompt'))}</label>
+        <input type="text" id="quick-employee-search" placeholder="${UI.sanitize(i18n.t('assign.employeeSearchPlaceholder'))}" autocomplete="off">
+      </div>`;
+    let newEmployeeId = null;
+    const input = wrap.querySelector('#quick-employee-search');
+    UI.attachCombo(input, input.closest('.combo'),
+      () => Data.employees().map(e => ({ id:e.id, label:e.name + (e.departmentId ? ' — ' + Data.deptName(e.departmentId) : '') })),
+      (id) => { newEmployeeId = id; });
+    UI.showModal({
+      title: i18n.t('assign.assignQuickTitle'),
+      bodyEl: wrap,
+      confirmText: i18n.t('assign.assignQuick'),
+      onConfirm: () => {
+        if (!newEmployeeId){ UI.showToast(i18n.t('assign.selectEmployeeFirst'),'error'); return false; }
+        const toName = Data.empName(newEmployeeId);
+        Store.upsert('assignments', {
+          ...record, status:'assigned', employeeId: newEmployeeId, departmentId: null, locationNote: '',
+          history: pushHistory(record, { action:'assignedFromStorage', toName }),
+        });
+        UI.showToast(i18n.t('toast.saved'),'success');
+        renderList(); DashboardModule.markDirty();
+      }
+    });
   }
 
   function openForm(record){
@@ -1072,7 +1225,14 @@ const AssignModule = (() => {
       <div class="form-group">
         <label>${UI.sanitize(i18n.t('assign.notes'))}</label>
         <textarea id="assign-notes">${UI.sanitize(record?.notes||'')}</textarea>
-      </div>`;
+      </div>
+      ${(record?.history && record.history.length) ? `
+      <div class="form-group">
+        <label>${UI.sanitize(i18n.t('assign.history'))}</label>
+        <ul class="history-list">
+          ${record.history.slice().reverse().map(h => `<li><span>${UI.sanitize(historyText(h))}</span><span class="history-date">${UI.sanitize(UI.formatDate(h.ts))}</span></li>`).join('')}
+        </ul>
+      </div>` : ''}`;
 
     const svcContainer = wrap.querySelector('#assign-services');
     if (!Data.services().length){
@@ -1139,6 +1299,23 @@ const AssignModule = (() => {
           notes: wrap.querySelector('#assign-notes').value.trim(),
           serviceIds,
         };
+        let historyEntry;
+        if (!isEdit){
+          historyEntry = { action:'created' };
+        } else if (record.status !== payload.status || record.employeeId !== payload.employeeId){
+          if (payload.status === 'assigned' && record.status === 'assigned'){
+            historyEntry = { action:'reassigned', fromName: Data.empName(record.employeeId), toName: Data.empName(payload.employeeId) };
+          } else if (payload.status === 'unassigned'){
+            historyEntry = { action:'unassigned', deptName: Data.deptName(payload.departmentId), fromName: Data.empName(record.employeeId) };
+          } else if (payload.status === 'assigned' && record.status === 'unassigned'){
+            historyEntry = { action:'assignedFromStorage', toName: Data.empName(payload.employeeId) };
+          } else {
+            historyEntry = { action:'edited' };
+          }
+        } else {
+          historyEntry = { action:'edited' };
+        }
+        payload.history = pushHistory(record || {}, historyEntry);
         Store.upsert('assignments', payload);
         UI.showToast(i18n.t('toast.saved'), 'success');
         renderList();
@@ -1343,7 +1520,29 @@ const ListsModule = (() => {
         card.querySelector('.btn-edit').onclick = () => openEdit(item);
         card.querySelector('.btn-delete').onclick = () => {
           const usage = Data.countUsage('employees', null, item.id);
-          if (usage > 0){ UI.showToast(i18n.t('lists.usedByDevices',{n:usage}), 'error'); return; }
+          if (usage > 0){
+            const p = document.createElement('p');
+            p.textContent = i18n.t('lists.employeeHasDevicesMsg', { name:item.name, n:usage });
+            UI.showModal({
+              title: i18n.t('lists.employeeHasDevicesTitle'),
+              bodyEl: p,
+              danger: true,
+              confirmText: i18n.t('lists.releaseThenDelete'),
+              onConfirm: () => {
+                const deptId = item.departmentId ?? null;
+                const deptName = Data.deptName(deptId);
+                Data.employeeAssignedDevices(item.id).forEach(a => {
+                  const history = Array.isArray(a.history) ? a.history.slice() : [];
+                  history.push({ ts: Date.now(), action:'unassigned', deptName, fromName: item.name });
+                  Store.upsert('assignments', { ...a, status:'unassigned', employeeId:null, departmentId: deptId, locationNote:'', history });
+                });
+                Store.remove('employees', item.id);
+                UI.showToast(i18n.t('toast.deleted'),'success');
+                renderList(); DashboardModule.markDirty();
+              }
+            });
+            return;
+          }
           UI.confirmDanger({
             title: i18n.t('common.delete'),
             message: i18n.t('lists.deleteConfirmName',{name:item.name}),
@@ -1612,6 +1811,11 @@ const SettingsModule = (() => {
         }
       });
     };
+
+    const credit = document.createElement('div');
+    credit.style.cssText = 'text-align:center; color:var(--text-muted); font-size:.75rem; margin-top:1.5rem';
+    credit.textContent = i18n.t('settings.credit');
+    body.appendChild(credit);
   }
 
   function exportBackup(){
