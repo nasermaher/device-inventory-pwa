@@ -67,7 +67,7 @@
 
 ### الفكرة والتنفيذ
 
-**محمود عبدالرحمن الأنصاري**
+**مهندس/ محمود عبدالرحمن الأنصاري**
 
 ---
 
@@ -130,4 +130,4 @@ This is a public GitHub repository used only to host the static page via GitHub 
 
 ### Idea & Implementation
 
-**Mahmoud Abdelrahman Al-Ansary**
+**Eng\ Mahmoud Abdelrahman Al-Ansary**
