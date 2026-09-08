@@ -95,7 +95,6 @@ input,select,textarea{font-family:inherit}
 .btn-secondary{background:var(--border); color:var(--text)}
 .btn-danger{background:var(--danger); color:#fff}
 .btn-sm{padding:.35rem .65rem; font-size:.75rem}
-.btn-block{width:100%}
 .btn-icon{background:none; border:none; cursor:pointer; color:inherit; font-size:1rem}
 .fab{
   position:fixed; bottom:calc(var(--nav-h) + 14px + env(safe-area-inset-bottom)); inset-inline-end:16px;
@@ -373,6 +372,7 @@ const i18n = (() => {
       'toast.error':'Something went wrong','toast.imported':'Imported {n} record(s)',
       'toast.exported':'Exported successfully','toast.invalidFile':'Could not read this file',
       'toast.required':'Please fill the required fields',
+      'toast.duplicateName':'This name already exists',
       'confirm.delete':'This action cannot be undone.',
       'assign.title':'Assign Devices','assign.addBtn':'Add Device',
       'assign.editTitle':'Edit Device Record','assign.addTitle':'Add Device Record',
@@ -434,6 +434,7 @@ const i18n = (() => {
       'toast.error':'حدث خطأ ما','toast.imported':'تم استيراد {n} سجل',
       'toast.exported':'تم التصدير بنجاح','toast.invalidFile':'تعذّرت قراءة هذا الملف',
       'toast.required':'يرجى ملء الحقول المطلوبة',
+      'toast.duplicateName':'هذا الاسم موجود بالفعل',
       'confirm.delete':'لا يمكن التراجع عن هذا الإجراء.',
       'assign.title':'تعيين الأجهزة','assign.addBtn':'إضافة جهاز',
       'assign.editTitle':'تعديل سجل الجهاز','assign.addTitle':'إضافة سجل جهاز',
@@ -509,7 +510,7 @@ const i18n = (() => {
   }
   function current(){ return lang; }
   function init(){
-    Store.on('language', l=>{ setLanguage(l); if (typeof App !== 'undefined') App.rerender(); });
+    Store.on('language', setLanguage);
     setLanguage(Store.get('language') || 'ar');
   }
   return { t, setLanguage, applyToDOM, init, current };
@@ -532,7 +533,6 @@ const UI = (() => {
       if (!el) continue;
       if (b.text !== undefined) el.textContent = b.text;
       if (b.attr !== undefined) el.setAttribute(b.attr, b.value);
-      if (b.html !== undefined) el.innerHTML = sanitize(b.html);
     }
     return clone;
   }
@@ -547,7 +547,7 @@ const UI = (() => {
     setTimeout(()=>{ el.classList.remove('toast-visible'); setTimeout(()=>el.remove(), 300); }, duration);
   }
 
-  function showModal({ title, bodyEl, onConfirm, confirmText, cancelText, danger=false, hideFooter=false }){
+  function showModal({ title, bodyEl, onConfirm, confirmText, cancelText, danger=false }){
     const overlay = document.getElementById('modal-overlay');
     overlay.innerHTML = '';
     const modal = document.createElement('div');
@@ -563,26 +563,23 @@ const UI = (() => {
     body.className = 'modal-body';
     if (bodyEl) body.appendChild(bodyEl);
     modal.append(header, body);
-    if (!hideFooter){
-      const footer = document.createElement('div');
-      footer.className = 'modal-footer';
-      const cancelBtn = document.createElement('button');
-      cancelBtn.className = 'btn btn-secondary'; cancelBtn.type='button';
-      cancelBtn.textContent = cancelText || i18n.t('common.cancel');
-      const confirmBtn = document.createElement('button');
-      confirmBtn.className = 'btn ' + (danger ? 'btn-danger':'btn-primary'); confirmBtn.type='button';
-      confirmBtn.textContent = confirmText || i18n.t('common.save');
-      footer.append(cancelBtn, confirmBtn);
-      modal.appendChild(footer);
-      cancelBtn.onclick = close;
-      confirmBtn.onclick = () => { const r = onConfirm?.(); if (r !== false) close(); };
-    }
+    const footer = document.createElement('div');
+    footer.className = 'modal-footer';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn btn-secondary'; cancelBtn.type='button';
+    cancelBtn.textContent = cancelText || i18n.t('common.cancel');
+    const confirmBtn = document.createElement('button');
+    confirmBtn.className = 'btn ' + (danger ? 'btn-danger':'btn-primary'); confirmBtn.type='button';
+    confirmBtn.textContent = confirmText || i18n.t('common.save');
+    footer.append(cancelBtn, confirmBtn);
+    modal.appendChild(footer);
+    cancelBtn.onclick = close;
+    confirmBtn.onclick = () => { const r = onConfirm?.(); if (r !== false) close(); };
     overlay.appendChild(modal);
     overlay.classList.remove('hidden');
     function close(){ overlay.classList.add('hidden'); overlay.innerHTML=''; }
     closeBtn.onclick = close;
     overlay.onclick = (e)=>{ if (e.target===overlay) close(); };
-    return { close, modal };
   }
 
   function confirmDanger({ title, message, confirmText, onConfirm }){
@@ -932,7 +929,7 @@ const Data = (() => {
     return a.departmentId ?? null;
   }
 
-  function countUsage(collection, field, id){
+  function countUsage(collection, id){
     return assignments().filter(a => {
       if (collection === 'employees') return a.status==='assigned' && a.employeeId === id;
       if (collection === 'departments') return assignmentDeptId(a) === id;
@@ -967,6 +964,53 @@ const AssignModule = (() => {
     if (h.action === 'unassigned') return i18n.t('assign.historyUnassigned', { dept: h.deptName||'-', from: h.fromName||'-' });
     if (h.action === 'assignedFromStorage') return i18n.t('assign.historyAssignedFromStorage', { to: h.toName||'-' });
     return i18n.t('assign.historyEdited');
+  }
+
+  // Classifies a full-form save into the same history action vocabulary the quick
+  // actions use, by diffing the record being replaced against the new payload.
+  // Pure function: no DOM/Store access, so it's independently testable.
+  function inferHistoryEntry(oldRecord, payload, isEdit){
+    if (!isEdit) return { action:'created' };
+    if (oldRecord.status === payload.status && oldRecord.employeeId === payload.employeeId){
+      return { action:'edited' };
+    }
+    if (payload.status === 'assigned' && oldRecord.status === 'assigned'){
+      return { action:'reassigned', fromName: Data.empName(oldRecord.employeeId), toName: Data.empName(payload.employeeId) };
+    }
+    if (payload.status === 'unassigned'){
+      return { action:'unassigned', deptName: Data.deptName(payload.departmentId), fromName: Data.empName(oldRecord.employeeId) };
+    }
+    if (payload.status === 'assigned' && oldRecord.status === 'unassigned'){
+      return { action:'assignedFromStorage', toName: Data.empName(payload.employeeId) };
+    }
+    return { action:'edited' };
+  }
+
+  // Single source of truth for "return a device to storage": resets the
+  // assignment fields and appends the matching history entry. Used by the
+  // single-record quick action and by the employee bulk-release flow below,
+  // and reused by ListsModule when deleting an employee who still holds devices.
+  function unassignRecord(record, deptId){
+    const deptName = Data.deptName(deptId);
+    const fromName = Data.empName(record.employeeId);
+    return Store.upsert('assignments', {
+      ...record, status:'unassigned', employeeId: null, departmentId: deptId, locationNote: '',
+      history: pushHistory(record, { action:'unassigned', deptName, fromName }),
+    });
+  }
+
+  function releaseEmployeeDevices(employeeId){
+    const deptId = Data.empDeptId(employeeId);
+    Data.employeeAssignedDevices(employeeId).forEach(a => unassignRecord(a, deptId));
+  }
+
+  function addQuickAction(actionsEl, label, onClick){
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-sm btn-quick'; btn.type = 'button';
+    btn.textContent = label;
+    btn.onclick = onClick;
+    actionsEl.insertBefore(btn, actionsEl.firstChild);
+    return btn;
   }
 
   function render(){
@@ -1070,23 +1114,10 @@ const AssignModule = (() => {
       });
       const actions = card.querySelector('.card-actions');
       if (a.status === 'assigned'){
-        const reassignBtn = document.createElement('button');
-        reassignBtn.className = 'btn btn-sm btn-quick'; reassignBtn.type = 'button';
-        reassignBtn.textContent = i18n.t('assign.reassign');
-        reassignBtn.onclick = () => quickReassign(a);
-        actions.insertBefore(reassignBtn, actions.firstChild);
-
-        const unassignBtn = document.createElement('button');
-        unassignBtn.className = 'btn btn-sm btn-quick'; unassignBtn.type = 'button';
-        unassignBtn.textContent = i18n.t('assign.unassign');
-        unassignBtn.onclick = () => quickUnassign(a);
-        actions.insertBefore(unassignBtn, actions.firstChild);
+        addQuickAction(actions, i18n.t('assign.reassign'), () => quickReassign(a));
+        addQuickAction(actions, i18n.t('assign.unassign'), () => quickUnassign(a));
       } else {
-        const assignBtn = document.createElement('button');
-        assignBtn.className = 'btn btn-sm btn-quick'; assignBtn.type = 'button';
-        assignBtn.textContent = i18n.t('assign.assignQuick');
-        assignBtn.onclick = () => quickAssignFromStorage(a);
-        actions.insertBefore(assignBtn, actions.firstChild);
+        addQuickAction(actions, i18n.t('assign.assignQuick'), () => quickAssignFromStorage(a));
       }
       card.querySelector('.btn-edit').onclick = () => openForm(a);
       card.querySelector('.btn-delete').onclick = () => {
@@ -1141,11 +1172,7 @@ const AssignModule = (() => {
       bodyEl: p,
       confirmText: i18n.t('assign.unassign'),
       onConfirm: () => {
-        const fromName = Data.empName(record.employeeId);
-        Store.upsert('assignments', {
-          ...record, status:'unassigned', employeeId: null, departmentId: deptId, locationNote: '',
-          history: pushHistory(record, { action:'unassigned', deptName, fromName }),
-        });
+        unassignRecord(record, deptId);
         UI.showToast(i18n.t('toast.saved'),'success');
         renderList(); DashboardModule.markDirty();
       }
@@ -1299,23 +1326,7 @@ const AssignModule = (() => {
           notes: wrap.querySelector('#assign-notes').value.trim(),
           serviceIds,
         };
-        let historyEntry;
-        if (!isEdit){
-          historyEntry = { action:'created' };
-        } else if (record.status !== payload.status || record.employeeId !== payload.employeeId){
-          if (payload.status === 'assigned' && record.status === 'assigned'){
-            historyEntry = { action:'reassigned', fromName: Data.empName(record.employeeId), toName: Data.empName(payload.employeeId) };
-          } else if (payload.status === 'unassigned'){
-            historyEntry = { action:'unassigned', deptName: Data.deptName(payload.departmentId), fromName: Data.empName(record.employeeId) };
-          } else if (payload.status === 'assigned' && record.status === 'unassigned'){
-            historyEntry = { action:'assignedFromStorage', toName: Data.empName(payload.employeeId) };
-          } else {
-            historyEntry = { action:'edited' };
-          }
-        } else {
-          historyEntry = { action:'edited' };
-        }
-        payload.history = pushHistory(record || {}, historyEntry);
+        payload.history = pushHistory(record || {}, inferHistoryEntry(record, payload, isEdit));
         Store.upsert('assignments', payload);
         UI.showToast(i18n.t('toast.saved'), 'success');
         renderList();
@@ -1325,7 +1336,7 @@ const AssignModule = (() => {
   }
 
   function init(){ render(); }
-  return { init, render, renderList };
+  return { init, render, renderList, releaseEmployeeDevices };
 })();
 
 /* ============================== Lists Module (Departments / Employees / DeviceTypes / Services) ============================== */
@@ -1339,6 +1350,13 @@ const ListsModule = (() => {
     { key:'deviceTypes', titleKey:'lists.deviceTypes' },
     { key:'services',    titleKey:'lists.services' },
   ];
+
+  // True if another record in `collection` already has this name (case-insensitive).
+  // `ownId` excludes the record being edited from the check.
+  function nameTaken(collection, name, ownId){
+    const needle = name.trim().toLowerCase();
+    return (Store.get(collection)||[]).some(i => i.id !== ownId && i.name.toLowerCase() === needle);
+  }
 
   function pickField(record, aliases){
     const keys = Object.keys(record);
@@ -1381,17 +1399,19 @@ const ListsModule = (() => {
     else if (activeTab === 'employees') renderEmployees(body);
   }
 
-  /* ---------- Generic simple (name-only) list: departments / deviceTypes / services ---------- */
-  function renderSimple(body, cfg){
+  // Shared head/toolbar/search-bar scaffolding for every Lists tab. Returns the
+  // toolbar and search bar so each tab can wire its own add/import/export/search
+  // behavior on top.
+  function buildListShell(body, { title, addLabel }){
     const head = document.createElement('div');
     head.className = 'section-head';
-    head.innerHTML = `<h2>${UI.sanitize(i18n.t(TABS.find(t=>t.key===cfg.collection)?.titleKey || ''))}</h2>`;
+    head.innerHTML = `<h2>${UI.sanitize(title)}</h2>`;
     body.appendChild(head);
 
     const toolbar = document.createElement('div');
     toolbar.className = 'import-actions';
     toolbar.innerHTML = `
-      <button class="btn btn-primary btn-sm" id="ls-add">${UI.sanitize(i18n.t(cfg.addKey))}</button>
+      <button class="btn btn-primary btn-sm" id="ls-add">${UI.sanitize(addLabel)}</button>
       <button class="btn btn-secondary btn-sm" id="ls-import">${UI.sanitize(i18n.t('common.import'))}</button>
       <button class="btn btn-secondary btn-sm" id="ls-export">${UI.sanitize(i18n.t('common.export'))}</button>`;
     body.appendChild(toolbar);
@@ -1400,6 +1420,16 @@ const ListsModule = (() => {
     searchBar.className = 'search-bar';
     searchBar.innerHTML = `<input type="search" id="ls-search" placeholder="${UI.sanitize(i18n.t('common.search'))}" value="${UI.sanitize(searchQ)}">`;
     body.appendChild(searchBar);
+
+    return { toolbar, searchBar };
+  }
+
+  /* ---------- Generic simple (name-only) list: departments / deviceTypes / services ---------- */
+  function renderSimple(body, cfg){
+    const { toolbar, searchBar } = buildListShell(body, {
+      title: i18n.t(TABS.find(t=>t.key===cfg.collection)?.titleKey || ''),
+      addLabel: i18n.t(cfg.addKey),
+    });
 
     const listEl = document.createElement('div');
     body.appendChild(listEl);
@@ -1418,7 +1448,7 @@ const ListsModule = (() => {
         });
         card.querySelector('.btn-edit').onclick = () => openEdit(item);
         card.querySelector('.btn-delete').onclick = () => {
-          const usage = Data.countUsage(cfg.usageKey, null, item.id);
+          const usage = Data.countUsage(cfg.usageKey, item.id);
           if (usage > 0){ UI.showToast(i18n.t('lists.usedByDevices',{n:usage}), 'error'); return; }
           UI.confirmDanger({
             title: i18n.t('common.delete'),
@@ -1441,6 +1471,7 @@ const ListsModule = (() => {
         onConfirm: () => {
           const name = wrap.querySelector('#ls-name').value.trim();
           if (!name){ UI.showToast(i18n.t('toast.required'),'error'); return false; }
+          if (nameTaken(cfg.collection, name, item?.id)){ UI.showToast(i18n.t('toast.duplicateName'),'error'); return false; }
           Store.upsert(cfg.collection, { id:item?.id, name });
           UI.showToast(i18n.t('toast.saved'),'success');
           renderList();
@@ -1470,23 +1501,10 @@ const ListsModule = (() => {
 
   /* ---------- Employees (name + department + code + jobTitle) ---------- */
   function renderEmployees(body){
-    const head = document.createElement('div');
-    head.className = 'section-head';
-    head.innerHTML = `<h2>${UI.sanitize(i18n.t('lists.employees'))}</h2>`;
-    body.appendChild(head);
-
-    const toolbar = document.createElement('div');
-    toolbar.className = 'import-actions';
-    toolbar.innerHTML = `
-      <button class="btn btn-primary btn-sm" id="ls-add">${UI.sanitize(i18n.t('lists.addEmployee'))}</button>
-      <button class="btn btn-secondary btn-sm" id="ls-import">${UI.sanitize(i18n.t('common.import'))}</button>
-      <button class="btn btn-secondary btn-sm" id="ls-export">${UI.sanitize(i18n.t('common.export'))}</button>`;
-    body.appendChild(toolbar);
-
-    const searchBar = document.createElement('div');
-    searchBar.className = 'search-bar';
-    searchBar.innerHTML = `<input type="search" id="ls-search" placeholder="${UI.sanitize(i18n.t('common.search'))}" value="${UI.sanitize(searchQ)}">`;
-    body.appendChild(searchBar);
+    const { toolbar, searchBar } = buildListShell(body, {
+      title: i18n.t('lists.employees'),
+      addLabel: i18n.t('lists.addEmployee'),
+    });
 
     const filterRow = document.createElement('div');
     filterRow.className = 'filters-row';
@@ -1512,14 +1530,14 @@ const ListsModule = (() => {
           '.record-title': { text: item.name },
           '.record-sub': { text: [Data.deptName(item.departmentId), item.jobTitle, item.employeeCode].filter(Boolean).join(' • ') },
         });
-        const deviceCount = Data.countUsage('employees', null, item.id);
+        const deviceCount = Data.countUsage('employees', item.id);
         if (deviceCount){
           const tag = document.createElement('span'); tag.className='tag'; tag.textContent = deviceCount + ' 🖥️';
           card.querySelector('.record-tags').appendChild(tag);
         }
         card.querySelector('.btn-edit').onclick = () => openEdit(item);
         card.querySelector('.btn-delete').onclick = () => {
-          const usage = Data.countUsage('employees', null, item.id);
+          const usage = Data.countUsage('employees', item.id);
           if (usage > 0){
             const p = document.createElement('p');
             p.textContent = i18n.t('lists.employeeHasDevicesMsg', { name:item.name, n:usage });
@@ -1529,13 +1547,7 @@ const ListsModule = (() => {
               danger: true,
               confirmText: i18n.t('lists.releaseThenDelete'),
               onConfirm: () => {
-                const deptId = item.departmentId ?? null;
-                const deptName = Data.deptName(deptId);
-                Data.employeeAssignedDevices(item.id).forEach(a => {
-                  const history = Array.isArray(a.history) ? a.history.slice() : [];
-                  history.push({ ts: Date.now(), action:'unassigned', deptName, fromName: item.name });
-                  Store.upsert('assignments', { ...a, status:'unassigned', employeeId:null, departmentId: deptId, locationNote:'', history });
-                });
+                AssignModule.releaseEmployeeDevices(item.id);
                 Store.remove('employees', item.id);
                 UI.showToast(i18n.t('toast.deleted'),'success');
                 renderList(); DashboardModule.markDirty();
@@ -1908,7 +1920,7 @@ const App = (() => {
     i18n.init();
     updateLangButton();
     setManifest();
-    Store.on('language', () => { updateLangButton(); setManifest(); });
+    Store.on('language', () => { updateLangButton(); setManifest(); routes[current]?.render?.(); });
     document.querySelectorAll('#bottom-nav .nav-item').forEach(btn =>
       btn.addEventListener('click', () => navigate(btn.dataset.nav)));
     navigate('assign');
