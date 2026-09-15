@@ -208,6 +208,25 @@ html[dir="ltr"] .segmented{direction:ltr}
   .nav-item{font-size:.62rem}
   #app-title{font-size:.95rem}
 }
+
+/* Reports */
+.reports-summary{display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:.5rem; margin-bottom:.7rem}
+.reports-summary .stat{background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); padding:.6rem; text-align:center}
+.reports-summary .stat b{display:block; font-size:1.2rem; color:var(--primary)}
+.reports-summary .stat span{font-size:.68rem; color:var(--text-muted)}
+
+#print-report{display:none}
+@media print{
+  body > *:not(#print-report){display:none !important}
+  #print-report{display:block !important; position:static; padding:0; margin:0; color:#000; background:#fff}
+  #print-report h1{font-size:16px; margin:0 0 2px}
+  #print-report .print-meta{font-size:11px; color:#444; margin-bottom:12px}
+  #print-report h2{font-size:13px; margin:16px 0 6px; border-bottom:1px solid #333; padding-bottom:2px; break-after:avoid}
+  #print-report table{width:100%; border-collapse:collapse; margin-bottom:14px; font-size:10.5px}
+  #print-report th,#print-report td{border:1px solid #999; padding:3px 5px; text-align:start; vertical-align:top}
+  #print-report thead{display:table-header-group}
+  #print-report tr{break-inside:avoid}
+}
 </style>
 </head>
 <body>
@@ -416,6 +435,14 @@ const i18n = (() => {
       'dashboard.title':'Statistics','dashboard.byType':'Devices by Type','dashboard.byDepartment':'Devices by Department',
       'dashboard.assignedVsUnassigned':'Assigned vs Unassigned','dashboard.noData':'Add some device records to see charts.',
       'dashboard.assigned':'Assigned','dashboard.unassigned':'Unassigned',
+      'reports.title':'Detailed Report','reports.about':'Generate a full report with statistics and per-employee / per-device details.',
+      'reports.exportExcel':'Export Excel Report','reports.print':'Print Report',
+      'reports.totalDevices':'Total Devices','reports.totalEmployees':'Employees','reports.totalDepartments':'Departments',
+      'reports.assignedCount':'Assigned','reports.unassignedCount':'In Storage',
+      'reports.summarySheet':'Summary','reports.devicesSheet':'Devices','reports.employeesSheet':'Employees',
+      'reports.deviceCount':'Device Count','reports.code':'Code','reports.status':'Status','reports.printedAt':'Printed at',
+      'reports.holder':'Employee / Location','reports.metric':'Metric','reports.value':'Value',
+      'reports.noDept':'— No department —','reports.devicesSummaryByType':'Devices by Type','reports.devicesSummaryByDept':'Devices by Department',
       'settings.title':'Settings','settings.language':'Language','settings.backup':'Backup & Restore',
       'settings.export':'Export Backup (JSON)','settings.import':'Restore Backup (JSON)',
       'settings.dangerZone':'Danger Zone','settings.clearAll':'Erase All Data',
@@ -478,6 +505,14 @@ const i18n = (() => {
       'dashboard.title':'الإحصائيات','dashboard.byType':'توزيع الأجهزة حسب النوع','dashboard.byDepartment':'توزيع الأجهزة حسب الإدارة',
       'dashboard.assignedVsUnassigned':'المخصصة مقابل غير المخصصة','dashboard.noData':'أضف بعض سجلات الأجهزة لعرض الرسوم البيانية.',
       'dashboard.assigned':'مخصصة','dashboard.unassigned':'غير مخصصة',
+      'reports.title':'تقرير تفصيلي','reports.about':'إنشاء تقرير كامل يعرض الإحصائيات وتفاصيل كل موظف وكل جهاز.',
+      'reports.exportExcel':'تصدير تقرير Excel','reports.print':'طباعة التقرير',
+      'reports.totalDevices':'إجمالي الأجهزة','reports.totalEmployees':'عدد الموظفين','reports.totalDepartments':'عدد الإدارات',
+      'reports.assignedCount':'مخصصة','reports.unassignedCount':'في المخزن',
+      'reports.summarySheet':'ملخص','reports.devicesSheet':'الأجهزة','reports.employeesSheet':'الموظفون',
+      'reports.deviceCount':'عدد الأجهزة','reports.code':'الكود','reports.status':'الحالة','reports.printedAt':'تاريخ الطباعة',
+      'reports.holder':'الموظف / الموقع','reports.metric':'البيان','reports.value':'القيمة',
+      'reports.noDept':'— بدون إدارة —','reports.devicesSummaryByType':'الأجهزة حسب النوع','reports.devicesSummaryByDept':'الأجهزة حسب الإدارة',
       'settings.title':'الإعدادات','settings.language':'اللغة','settings.backup':'النسخ الاحتياطي والاستعادة',
       'settings.export':'تصدير نسخة احتياطية (JSON)','settings.import':'استعادة نسخة احتياطية (JSON)',
       'settings.dangerZone':'منطقة الخطر','settings.clearAll':'مسح جميع البيانات',
@@ -1754,6 +1789,27 @@ const DashboardModule = (() => {
       { label: i18n.t('dashboard.assigned'), value: assignedCount },
       { label: i18n.t('dashboard.unassigned'), value: unassignedCount },
     ]);
+
+    // Detailed report: summary + export/print actions
+    const reportsCard = document.createElement('div');
+    reportsCard.className = 'card';
+    reportsCard.innerHTML = `
+      <h3 style="margin-bottom:.6rem">${UI.sanitize(i18n.t('reports.title'))}</h3>
+      <p style="color:var(--text-muted); font-size:.82rem; margin-bottom:.7rem">${UI.sanitize(i18n.t('reports.about'))}</p>
+      <div class="reports-summary">
+        <div class="stat"><b>${list.length}</b><span>${UI.sanitize(i18n.t('reports.totalDevices'))}</span></div>
+        <div class="stat"><b>${assignedCount}</b><span>${UI.sanitize(i18n.t('reports.assignedCount'))}</span></div>
+        <div class="stat"><b>${unassignedCount}</b><span>${UI.sanitize(i18n.t('reports.unassignedCount'))}</span></div>
+        <div class="stat"><b>${Data.employees().length}</b><span>${UI.sanitize(i18n.t('reports.totalEmployees'))}</span></div>
+        <div class="stat"><b>${Data.departments().length}</b><span>${UI.sanitize(i18n.t('reports.totalDepartments'))}</span></div>
+      </div>
+      <div class="import-actions">
+        <button class="btn btn-primary btn-sm" id="rp-export-excel">${UI.sanitize(i18n.t('reports.exportExcel'))}</button>
+        <button class="btn btn-secondary btn-sm" id="rp-print">${UI.sanitize(i18n.t('reports.print'))}</button>
+      </div>`;
+    body.appendChild(reportsCard);
+    reportsCard.querySelector('#rp-export-excel').onclick = () => ReportsModule.exportExcel();
+    reportsCard.querySelector('#rp-print').onclick = () => ReportsModule.printReport();
   }
 
   function markDirty(){
@@ -1762,6 +1818,186 @@ const DashboardModule = (() => {
 
   function init(){ render(); }
   return { init, render, markDirty };
+})();
+
+/* ============================== Reports Module ============================== */
+// Builds statistics + per-employee / per-device detail data and offers two zero-dependency
+// outputs: a multi-sheet Excel file (SpreadsheetML 2003 XML, opens natively in Excel) and a
+// print-only view rendered into #print-report and triggered via window.print().
+const ReportsModule = (() => {
+  function buildReportData(){
+    const departments = Data.departments();
+    const employees = Data.employees();
+    const assignments = Data.assignments();
+
+    const typeCounts = {}, deptCounts = {};
+    assignments.forEach(a => {
+      const t = Data.typeName(a.deviceTypeId) || '-';
+      typeCounts[t] = (typeCounts[t]||0)+1;
+      const d = Data.deptName(Data.assignmentDeptId(a)) || i18n.t('reports.noDept');
+      deptCounts[d] = (deptCounts[d]||0)+1;
+    });
+
+    const deviceRows = assignments.map(a => ({
+      id: a.id,
+      status: a.status === 'assigned' ? i18n.t('assign.statusAssigned') : i18n.t('assign.statusUnassigned'),
+      type: Data.typeName(a.deviceTypeId),
+      model: a.model || '',
+      serialNumber: a.serialNumber || '',
+      assetTag: a.assetTag || '',
+      ipAddress: a.ipAddress || '',
+      holder: a.status === 'assigned'
+        ? Data.empName(a.employeeId)
+        : (Data.deptName(a.departmentId) || i18n.t('reports.noDept')) + (a.locationNote ? ` (${a.locationNote})` : ''),
+      department: Data.deptName(Data.assignmentDeptId(a)) || i18n.t('reports.noDept'),
+      services: (a.serviceIds||[]).map(id => Data.svcName(id)).filter(Boolean).join(', '),
+      notes: a.notes || '',
+    }));
+
+    const employeeRows = employees.map(e => {
+      const devices = Data.employeeAssignedDevices(e.id);
+      return {
+        name: e.name,
+        code: e.employeeCode || '',
+        jobTitle: e.jobTitle || '',
+        department: Data.deptName(e.departmentId) || i18n.t('reports.noDept'),
+        deviceCount: devices.length,
+        devices: devices.map(a => a.model ? `${Data.typeName(a.deviceTypeId)} - ${a.model}` : Data.typeName(a.deviceTypeId)).join(' | '),
+      };
+    }).sort((a,b) => a.name.localeCompare(b.name, 'ar'));
+
+    return {
+      summary: {
+        totalDevices: assignments.length,
+        assigned: assignments.filter(a=>a.status==='assigned').length,
+        unassigned: assignments.filter(a=>a.status==='unassigned').length,
+        totalEmployees: employees.length,
+        totalDepartments: departments.length,
+      },
+      typeCounts, deptCounts, deviceRows, employeeRows,
+    };
+  }
+
+  /* ---------- Excel export (zero-dependency SpreadsheetML 2003 XML, opens in Excel/LibreOffice) ---------- */
+  function xmlEsc(s){
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function sheetXml(name, headers, rows){
+    const headerRow = '<Row>' + headers.map(h => `<Cell><Data ss:Type="String">${xmlEsc(h)}</Data></Cell>`).join('') + '</Row>';
+    const bodyRows = rows.map(r => '<Row>' + r.map(v => {
+      const isNum = typeof v === 'number' && Number.isFinite(v);
+      return `<Cell><Data ss:Type="${isNum ? 'Number' : 'String'}">${xmlEsc(v)}</Data></Cell>`;
+    }).join('') + '</Row>').join('');
+    return `<Worksheet ss:Name="${xmlEsc(name)}"><Table>${headerRow}${bodyRows}</Table></Worksheet>`;
+  }
+
+  function exportExcel(){
+    const data = buildReportData();
+
+    const summaryRows = [
+      [i18n.t('reports.totalDevices'), data.summary.totalDevices],
+      [i18n.t('reports.assignedCount'), data.summary.assigned],
+      [i18n.t('reports.unassignedCount'), data.summary.unassigned],
+      [i18n.t('reports.totalEmployees'), data.summary.totalEmployees],
+      [i18n.t('reports.totalDepartments'), data.summary.totalDepartments],
+    ];
+    Object.entries(data.typeCounts).sort((a,b)=>b[1]-a[1])
+      .forEach(([k,v]) => summaryRows.push([`${i18n.t('reports.devicesSummaryByType')}: ${k}`, v]));
+    Object.entries(data.deptCounts).sort((a,b)=>b[1]-a[1])
+      .forEach(([k,v]) => summaryRows.push([`${i18n.t('reports.devicesSummaryByDept')}: ${k}`, v]));
+    const summarySheet = sheetXml(i18n.t('reports.summarySheet'), [i18n.t('reports.metric'), i18n.t('reports.value')], summaryRows);
+
+    const deviceHeaders = ['#', i18n.t('reports.status'), i18n.t('assign.deviceTypeLabel'), i18n.t('assign.model'),
+      i18n.t('assign.serialNumber'), i18n.t('assign.assetTag'), i18n.t('assign.ipAddress'),
+      i18n.t('reports.holder'), i18n.t('lists.departmentLabel'), i18n.t('assign.servicesLabel'), i18n.t('assign.notes')];
+    const deviceRows = data.deviceRows.map(d => [d.id, d.status, d.type, d.model, d.serialNumber, d.assetTag, d.ipAddress, d.holder, d.department, d.services, d.notes]);
+    const devicesSheet = sheetXml(i18n.t('reports.devicesSheet'), deviceHeaders, deviceRows);
+
+    const empHeaders = [i18n.t('lists.nameLabel'), i18n.t('reports.code'), i18n.t('lists.jobTitle').replace(/\s*\(.*\)\s*$/,''),
+      i18n.t('lists.departmentLabel'), i18n.t('reports.deviceCount'), i18n.t('reports.devicesSheet')];
+    const empRows = data.employeeRows.map(e => [e.name, e.code, e.jobTitle, e.department, e.deviceCount, e.devices]);
+    const employeesSheet = sheetXml(i18n.t('reports.employeesSheet'), empHeaders, empRows);
+
+    const workbook = `<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">${summarySheet}${devicesSheet}${employeesSheet}</Workbook>`;
+
+    CSV.download(`device-inventory-report-${new Date().toISOString().slice(0,10)}.xls`, workbook, 'application/vnd.ms-excel;charset=utf-8');
+    UI.showToast(i18n.t('toast.exported'), 'success');
+  }
+
+  /* ---------- Print view: renders into #print-report (see @media print rules) then calls window.print() ---------- */
+  function printReport(){
+    const data = buildReportData();
+    let container = document.getElementById('print-report');
+    if (!container){
+      container = document.createElement('div');
+      container.id = 'print-report';
+      document.body.appendChild(container);
+    }
+
+    const now = new Date();
+    const printedAt = `${UI.formatDate(now.getTime())} ${now.toLocaleTimeString(i18n.current()==='ar' ? 'ar-EG' : 'en-GB')}`;
+
+    const summaryRowsHtml = [
+      [i18n.t('reports.totalDevices'), data.summary.totalDevices],
+      [i18n.t('reports.assignedCount'), data.summary.assigned],
+      [i18n.t('reports.unassignedCount'), data.summary.unassigned],
+      [i18n.t('reports.totalEmployees'), data.summary.totalEmployees],
+      [i18n.t('reports.totalDepartments'), data.summary.totalDepartments],
+    ].map(([k,v]) => `<tr><td>${UI.sanitize(k)}</td><td>${v}</td></tr>`).join('');
+
+    const typeRowsHtml = Object.entries(data.typeCounts).sort((a,b)=>b[1]-a[1])
+      .map(([k,v]) => `<tr><td>${UI.sanitize(k)}</td><td>${v}</td></tr>`).join('');
+    const deptRowsHtml = Object.entries(data.deptCounts).sort((a,b)=>b[1]-a[1])
+      .map(([k,v]) => `<tr><td>${UI.sanitize(k)}</td><td>${v}</td></tr>`).join('');
+
+    const deviceRowsHtml = data.deviceRows.map(d => `<tr>
+      <td>${d.id}</td><td>${UI.sanitize(d.status)}</td><td>${UI.sanitize(d.type)}</td><td>${UI.sanitize(d.model)}</td>
+      <td>${UI.sanitize(d.serialNumber)}</td><td>${UI.sanitize(d.assetTag)}</td><td>${UI.sanitize(d.ipAddress)}</td>
+      <td>${UI.sanitize(d.holder)}</td><td>${UI.sanitize(d.department)}</td><td>${UI.sanitize(d.services)}</td><td>${UI.sanitize(d.notes)}</td>
+    </tr>`).join('');
+
+    const employeeRowsHtml = data.employeeRows.map(e => `<tr>
+      <td>${UI.sanitize(e.name)}</td><td>${UI.sanitize(e.code)}</td><td>${UI.sanitize(e.jobTitle)}</td>
+      <td>${UI.sanitize(e.department)}</td><td>${e.deviceCount}</td><td>${UI.sanitize(e.devices)}</td>
+    </tr>`).join('');
+
+    container.innerHTML = `
+      <h1>${UI.sanitize(i18n.t('app.title'))} — ${UI.sanitize(i18n.t('reports.title'))}</h1>
+      <div class="print-meta">${UI.sanitize(i18n.t('reports.printedAt'))}: ${UI.sanitize(printedAt)}</div>
+
+      <h2>${UI.sanitize(i18n.t('reports.summarySheet'))}</h2>
+      <table><tbody>${summaryRowsHtml}</tbody></table>
+
+      <h2>${UI.sanitize(i18n.t('reports.devicesSummaryByType'))}</h2>
+      <table><thead><tr><th>${UI.sanitize(i18n.t('assign.deviceTypeLabel'))}</th><th>${UI.sanitize(i18n.t('reports.deviceCount'))}</th></tr></thead><tbody>${typeRowsHtml}</tbody></table>
+
+      <h2>${UI.sanitize(i18n.t('reports.devicesSummaryByDept'))}</h2>
+      <table><thead><tr><th>${UI.sanitize(i18n.t('lists.departmentLabel'))}</th><th>${UI.sanitize(i18n.t('reports.deviceCount'))}</th></tr></thead><tbody>${deptRowsHtml}</tbody></table>
+
+      <h2>${UI.sanitize(i18n.t('reports.employeesSheet'))}</h2>
+      <table><thead><tr>
+        <th>${UI.sanitize(i18n.t('lists.nameLabel'))}</th><th>${UI.sanitize(i18n.t('reports.code'))}</th>
+        <th>${UI.sanitize(i18n.t('lists.jobTitle').replace(/\s*\(.*\)\s*$/,''))}</th>
+        <th>${UI.sanitize(i18n.t('lists.departmentLabel'))}</th><th>${UI.sanitize(i18n.t('reports.deviceCount'))}</th>
+        <th>${UI.sanitize(i18n.t('reports.devicesSheet'))}</th>
+      </tr></thead><tbody>${employeeRowsHtml}</tbody></table>
+
+      <h2>${UI.sanitize(i18n.t('reports.devicesSheet'))}</h2>
+      <table><thead><tr>
+        <th>#</th><th>${UI.sanitize(i18n.t('reports.status'))}</th><th>${UI.sanitize(i18n.t('assign.deviceTypeLabel'))}</th>
+        <th>${UI.sanitize(i18n.t('assign.model'))}</th><th>${UI.sanitize(i18n.t('assign.serialNumber'))}</th>
+        <th>${UI.sanitize(i18n.t('assign.assetTag'))}</th><th>${UI.sanitize(i18n.t('assign.ipAddress'))}</th>
+        <th>${UI.sanitize(i18n.t('reports.holder'))}</th><th>${UI.sanitize(i18n.t('lists.departmentLabel'))}</th>
+        <th>${UI.sanitize(i18n.t('assign.servicesLabel'))}</th><th>${UI.sanitize(i18n.t('assign.notes'))}</th>
+      </tr></thead><tbody>${deviceRowsHtml}</tbody></table>`;
+
+    window.print();
+  }
+
+  window.addEventListener('afterprint', () => { document.getElementById('print-report')?.remove(); });
+
+  return { exportExcel, printReport };
 })();
 
 /* ============================== Settings Module ============================== */
