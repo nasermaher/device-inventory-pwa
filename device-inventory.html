@@ -86,6 +86,7 @@ input,select,textarea{font-family:inherit}
 .record-tags{display:flex; flex-wrap:wrap; gap:.3rem; margin-top:.4rem}
 .tag{background:var(--bg); color:var(--text-muted); border:1px solid var(--border); border-radius:20px; padding:.1rem .55rem; font-size:.72rem}
 .tag-status-assigned{background:#dcfce7; color:#166534; border-color:#bbf7d0}
+.tag-status-department{background:#dbeafe; color:#1e40af; border-color:#bfdbfe}
 .tag-status-unassigned{background:#fef3c7; color:#92400e; border-color:#fde68a}
 
 /* Buttons */
@@ -396,6 +397,7 @@ const i18n = (() => {
       'assign.title':'Assign Devices','assign.addBtn':'Add Device',
       'assign.editTitle':'Edit Device Record','assign.addTitle':'Add Device Record',
       'assign.statusAssigned':'Assigned to employee','assign.statusUnassigned':'Unassigned (in storage)',
+      'assign.statusDepartment':'Assigned to department',
       'assign.employeeLabel':'Employee','assign.employeeSearchPlaceholder':'Search employee...',
       'assign.departmentLabel':'Department / Location','assign.locationNote':'Location note (optional)',
       'assign.deviceTypeLabel':'Device Type','assign.deviceTypeSearchPlaceholder':'Search device type...',
@@ -418,6 +420,7 @@ const i18n = (() => {
       'assign.historyReassigned':'Reassigned: {from} → {to}',
       'assign.historyUnassigned':'Returned to storage ({dept}) — was with {from}',
       'assign.historyAssignedFromStorage':'Assigned to {to} (was in storage)',
+      'assign.historyAssignedToDepartment':'Assigned to department ({dept})',
       'assign.historyEdited':'Details edited',
       'lists.departments':'Departments','lists.employees':'Employees','lists.deviceTypes':'Device Types','lists.services':'Services',
       'lists.addDepartment':'Add Department','lists.addEmployee':'Add Employee',
@@ -466,6 +469,7 @@ const i18n = (() => {
       'assign.title':'تعيين الأجهزة','assign.addBtn':'إضافة جهاز',
       'assign.editTitle':'تعديل سجل الجهاز','assign.addTitle':'إضافة سجل جهاز',
       'assign.statusAssigned':'مخصص لموظف','assign.statusUnassigned':'غير مخصص (في المخزن)',
+      'assign.statusDepartment':'مخصص لإدارة',
       'assign.employeeLabel':'الموظف','assign.employeeSearchPlaceholder':'ابحث عن موظف...',
       'assign.departmentLabel':'الإدارة / الموقع','assign.locationNote':'ملاحظة الموقع (اختياري)',
       'assign.deviceTypeLabel':'نوع الجهاز','assign.deviceTypeSearchPlaceholder':'ابحث عن نوع الجهاز...',
@@ -488,6 +492,7 @@ const i18n = (() => {
       'assign.historyReassigned':'تم النقل: {from} ← {to}',
       'assign.historyUnassigned':'تم الإرجاع للمخزن ({dept}) — كان مع {from}',
       'assign.historyAssignedFromStorage':'تم التخصيص لـ {to} (كان في المخزن)',
+      'assign.historyAssignedToDepartment':'تم التخصيص لإدارة ({dept})',
       'assign.historyEdited':'تم تعديل البيانات',
       'lists.departments':'الإدارات','lists.employees':'الموظفون','lists.deviceTypes':'أنواع الأجهزة','lists.services':'الخدمات',
       'lists.addDepartment':'إضافة إدارة','lists.addEmployee':'إضافة موظف',
@@ -998,6 +1003,7 @@ const AssignModule = (() => {
     if (h.action === 'reassigned') return i18n.t('assign.historyReassigned', { from: h.fromName||'-', to: h.toName||'-' });
     if (h.action === 'unassigned') return i18n.t('assign.historyUnassigned', { dept: h.deptName||'-', from: h.fromName||'-' });
     if (h.action === 'assignedFromStorage') return i18n.t('assign.historyAssignedFromStorage', { to: h.toName||'-' });
+    if (h.action === 'assignedToDepartment') return i18n.t('assign.historyAssignedToDepartment', { dept: h.deptName||'-' });
     return i18n.t('assign.historyEdited');
   }
 
@@ -1015,8 +1021,11 @@ const AssignModule = (() => {
     if (payload.status === 'unassigned'){
       return { action:'unassigned', deptName: Data.deptName(payload.departmentId), fromName: Data.empName(oldRecord.employeeId) };
     }
-    if (payload.status === 'assigned' && oldRecord.status === 'unassigned'){
+    if (payload.status === 'assigned' && oldRecord.status !== 'assigned'){
       return { action:'assignedFromStorage', toName: Data.empName(payload.employeeId) };
+    }
+    if (payload.status === 'department'){
+      return { action:'assignedToDepartment', deptName: Data.deptName(payload.departmentId) };
     }
     return { action:'edited' };
   }
@@ -1037,6 +1046,18 @@ const AssignModule = (() => {
   function releaseEmployeeDevices(employeeId){
     const deptId = Data.empDeptId(employeeId);
     Data.employeeAssignedDevices(employeeId).forEach(a => unassignRecord(a, deptId));
+  }
+
+  function statusLabelKey(status){
+    if (status === 'assigned') return 'assign.statusAssigned';
+    if (status === 'department') return 'assign.statusDepartment';
+    return 'assign.statusUnassigned';
+  }
+
+  function statusTagClass(status){
+    if (status === 'assigned') return 'tag-status-assigned';
+    if (status === 'department') return 'tag-status-department';
+    return 'tag-status-unassigned';
   }
 
   function addQuickAction(actionsEl, label, onClick){
@@ -1071,6 +1092,7 @@ const AssignModule = (() => {
       <select id="assign-filter-status">
         <option value="">${UI.sanitize(i18n.t('assign.filterStatus'))}</option>
         <option value="assigned">${UI.sanitize(i18n.t('assign.statusAssigned'))}</option>
+        <option value="department">${UI.sanitize(i18n.t('assign.statusDepartment'))}</option>
         <option value="unassigned">${UI.sanitize(i18n.t('assign.statusUnassigned'))}</option>
       </select>`;
     body.appendChild(filtersRow);
@@ -1114,7 +1136,8 @@ const AssignModule = (() => {
       if (filters.deptId && String(Data.assignmentDeptId(a)) !== String(filters.deptId)) return false;
       if (q){
         const hay = [
-          a.status==='assigned' ? Data.empName(a.employeeId) : (a.locationNote||''),
+          a.status==='assigned' ? Data.empName(a.employeeId) : Data.deptName(Data.assignmentDeptId(a)),
+          a.locationNote||'',
           Data.typeName(a.deviceTypeId), a.model, a.serialNumber, a.assetTag, a.ipAddress, a.notes
         ].join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
@@ -1138,8 +1161,8 @@ const AssignModule = (() => {
       });
       const tags = card.querySelector('.record-tags');
       const statusTag = document.createElement('span');
-      statusTag.className = 'tag ' + (a.status==='assigned' ? 'tag-status-assigned' : 'tag-status-unassigned');
-      statusTag.textContent = i18n.t(a.status==='assigned' ? 'assign.statusAssigned' : 'assign.statusUnassigned');
+      statusTag.className = 'tag ' + statusTagClass(a.status);
+      statusTag.textContent = i18n.t(statusLabelKey(a.status));
       tags.appendChild(statusTag);
       (a.serviceIds||[]).forEach(sid => {
         const name = Data.svcName(sid);
@@ -1247,13 +1270,14 @@ const AssignModule = (() => {
     const isEdit = !!record;
     const status = record?.status || 'assigned';
     let selEmployeeId = record?.employeeId ?? null;
-    let selDeptId = record?.status==='unassigned' ? (record?.departmentId ?? null) : null;
+    let selDeptId = record?.status!=='assigned' ? (record?.departmentId ?? null) : null;
     let selTypeId = record?.deviceTypeId ?? null;
 
     const wrap = document.createElement('div');
     wrap.innerHTML = `
       <div class="segmented" id="assign-status-toggle">
         <button type="button" data-status="assigned">${UI.sanitize(i18n.t('assign.statusAssigned'))}</button>
+        <button type="button" data-status="department">${UI.sanitize(i18n.t('assign.statusDepartment'))}</button>
         <button type="button" data-status="unassigned">${UI.sanitize(i18n.t('assign.statusUnassigned'))}</button>
       </div>
       <div id="assign-employee-block" class="form-group combo">
@@ -1329,8 +1353,8 @@ const AssignModule = (() => {
     function applyStatusVisibility(st){
       wrap.querySelectorAll('#assign-status-toggle button').forEach(b => b.classList.toggle('active', b.dataset.status===st));
       wrap.querySelector('#assign-employee-block').classList.toggle('hidden', st!=='assigned');
-      wrap.querySelector('#assign-dept-block').classList.toggle('hidden', st!=='unassigned');
-      wrap.querySelector('#assign-location-block').classList.toggle('hidden', st!=='unassigned');
+      wrap.querySelector('#assign-dept-block').classList.toggle('hidden', st==='assigned');
+      wrap.querySelector('#assign-location-block').classList.toggle('hidden', st==='assigned');
     }
     let curStatus = status;
     applyStatusVisibility(curStatus);
@@ -1345,14 +1369,14 @@ const AssignModule = (() => {
       onConfirm: () => {
         if (!selTypeId){ UI.showToast(i18n.t('assign.selectDeviceTypeFirst'),'error'); return false; }
         if (curStatus==='assigned' && !selEmployeeId){ UI.showToast(i18n.t('assign.selectEmployeeFirst'),'error'); return false; }
-        if (curStatus==='unassigned' && !selDeptId){ UI.showToast(i18n.t('assign.selectDeptFirst'),'error'); return false; }
+        if (curStatus!=='assigned' && !selDeptId){ UI.showToast(i18n.t('assign.selectDeptFirst'),'error'); return false; }
         const serviceIds = Array.from(wrap.querySelectorAll('.service-chip-input:checked')).map(i => Number(i.value));
         const payload = {
           id: record?.id,
           status: curStatus,
           employeeId: curStatus==='assigned' ? selEmployeeId : null,
-          departmentId: curStatus==='unassigned' ? selDeptId : null,
-          locationNote: curStatus==='unassigned' ? wrap.querySelector('#assign-location-note').value.trim() : '',
+          departmentId: curStatus!=='assigned' ? selDeptId : null,
+          locationNote: curStatus!=='assigned' ? wrap.querySelector('#assign-location-note').value.trim() : '',
           deviceTypeId: selTypeId,
           model: wrap.querySelector('#assign-model').value.trim(),
           serialNumber: wrap.querySelector('#assign-serial').value.trim(),
@@ -1784,9 +1808,11 @@ const DashboardModule = (() => {
     statusCard.innerHTML = `<h3>${UI.sanitize(i18n.t('dashboard.assignedVsUnassigned'))}</h3><div class="chart-holder"></div>`;
     body.appendChild(statusCard);
     const assignedCount = list.filter(a=>a.status==='assigned').length;
+    const departmentCount = list.filter(a=>a.status==='department').length;
     const unassignedCount = list.filter(a=>a.status==='unassigned').length;
     Charts.donut(statusCard.querySelector('.chart-holder'), [
       { label: i18n.t('dashboard.assigned'), value: assignedCount },
+      { label: i18n.t('assign.statusDepartment'), value: departmentCount },
       { label: i18n.t('dashboard.unassigned'), value: unassignedCount },
     ]);
 
@@ -1799,6 +1825,7 @@ const DashboardModule = (() => {
       <div class="reports-summary">
         <div class="stat"><b>${list.length}</b><span>${UI.sanitize(i18n.t('reports.totalDevices'))}</span></div>
         <div class="stat"><b>${assignedCount}</b><span>${UI.sanitize(i18n.t('reports.assignedCount'))}</span></div>
+        <div class="stat"><b>${departmentCount}</b><span>${UI.sanitize(i18n.t('assign.statusDepartment'))}</span></div>
         <div class="stat"><b>${unassignedCount}</b><span>${UI.sanitize(i18n.t('reports.unassignedCount'))}</span></div>
         <div class="stat"><b>${Data.employees().length}</b><span>${UI.sanitize(i18n.t('reports.totalEmployees'))}</span></div>
         <div class="stat"><b>${Data.departments().length}</b><span>${UI.sanitize(i18n.t('reports.totalDepartments'))}</span></div>
@@ -1838,9 +1865,10 @@ const ReportsModule = (() => {
       deptCounts[d] = (deptCounts[d]||0)+1;
     });
 
+    const statusLabels = { assigned: i18n.t('assign.statusAssigned'), department: i18n.t('assign.statusDepartment'), unassigned: i18n.t('assign.statusUnassigned') };
     const deviceRows = assignments.map(a => ({
       id: a.id,
-      status: a.status === 'assigned' ? i18n.t('assign.statusAssigned') : i18n.t('assign.statusUnassigned'),
+      status: statusLabels[a.status] || a.status,
       type: Data.typeName(a.deviceTypeId),
       model: a.model || '',
       serialNumber: a.serialNumber || '',
@@ -1870,6 +1898,7 @@ const ReportsModule = (() => {
       summary: {
         totalDevices: assignments.length,
         assigned: assignments.filter(a=>a.status==='assigned').length,
+        department: assignments.filter(a=>a.status==='department').length,
         unassigned: assignments.filter(a=>a.status==='unassigned').length,
         totalEmployees: employees.length,
         totalDepartments: departments.length,
@@ -1898,6 +1927,7 @@ const ReportsModule = (() => {
     const summaryRows = [
       [i18n.t('reports.totalDevices'), data.summary.totalDevices],
       [i18n.t('reports.assignedCount'), data.summary.assigned],
+      [i18n.t('assign.statusDepartment'), data.summary.department],
       [i18n.t('reports.unassignedCount'), data.summary.unassigned],
       [i18n.t('reports.totalEmployees'), data.summary.totalEmployees],
       [i18n.t('reports.totalDepartments'), data.summary.totalDepartments],
@@ -1941,6 +1971,7 @@ const ReportsModule = (() => {
     const summaryRowsHtml = [
       [i18n.t('reports.totalDevices'), data.summary.totalDevices],
       [i18n.t('reports.assignedCount'), data.summary.assigned],
+      [i18n.t('assign.statusDepartment'), data.summary.department],
       [i18n.t('reports.unassignedCount'), data.summary.unassigned],
       [i18n.t('reports.totalEmployees'), data.summary.totalEmployees],
       [i18n.t('reports.totalDepartments'), data.summary.totalDepartments],
